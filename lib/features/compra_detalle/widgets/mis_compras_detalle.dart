@@ -4,8 +4,8 @@ import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
 import 'package:smart_spend_app/models/compra_detalle_model.dart';
 
-class CompraDetalle extends ConsumerWidget {
-  const CompraDetalle({
+class MisComprasDetalle extends ConsumerWidget {
+  const MisComprasDetalle({
     super.key,
   });
 
