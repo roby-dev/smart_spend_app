@@ -75,6 +75,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     for (var compraId in selectedCompras) {
       await _dbHelper.deleteCompra(compraId);
     }
+    toggleComprasSelection();
     await loadCompras();
   }
 
