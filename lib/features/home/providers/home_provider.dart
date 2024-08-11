@@ -6,8 +6,8 @@ import 'package:smart_spend_app/config/router/app_router.dart';
 import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 import 'package:smart_spend_app/models/compra_detalle_model.dart';
-import 'package:smart_spend_app/models/dialog_agregar_editar_compra.dart';
-import 'package:smart_spend_app/models/dialog_confirmar_eliminar.dart';
+import 'package:smart_spend_app/features/home/widgets/dialog_agregar_editar_compra.dart';
+import 'package:smart_spend_app/features/home/widgets/dialog_confirmar_eliminar.dart';
 
 final homeProvider =
     StateNotifierProvider<HomeNotifier, HomeState>((ref) => HomeNotifier(ref));
@@ -90,11 +90,17 @@ class HomeNotifier extends StateNotifier<HomeState> {
       {required BuildContext context, Compra? compra}) async {
     final TextEditingController titleController =
         TextEditingController(text: compra?.titulo ?? '');
+    final FocusNode focusNode = FocusNode();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      focusNode.requestFocus();
+    });
+
     final homeNotifier = ref.read(homeProvider.notifier);
 
     return showDialog<void>(
         context: context,
-        barrierDismissible: true,
+        barrierDismissible: false,
         builder: (BuildContext context) {
           return AddEditComprasDialog(
             title: compra != null ? 'Editar compra' : 'Nueva compra',
@@ -104,6 +110,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
                   compra: compra);
             },
             titleController: titleController,
+            focusNode: focusNode,
           );
         });
   }
@@ -157,7 +164,6 @@ class HomeNotifier extends StateNotifier<HomeState> {
   void goDetalleCompra({required Compra compra}) {
     selectCompra(compra);
     ref.read(compraDetalleProvider.notifier).loadCompraDetalles(compra.id!);
-    router.push('/compra-detalle');
   }
 }
 

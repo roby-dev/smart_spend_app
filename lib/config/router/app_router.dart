@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/features/compra_detalle/routes/compra_detalle_router.dart';
 import 'package:smart_spend_app/features/home/routes/home_router.dart';
 import 'package:smart_spend_app/features/shared/layouts/layout_1.dart';
+import 'package:smart_spend_app/features/shared/layouts/layout_2.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> mainShellNavigatorKey =
@@ -13,8 +14,12 @@ final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
   routes: <RouteBase>[
     ShellRoute(
-        builder: (context, state, child) => Layout1(child: child),
-        routes: [homeRouter, compraDetalleRouter],
+      builder: (context, state, child) => Layout1(child: child),
+      routes: [homeRouter],
+    ),
+    ShellRoute(
+        builder: (context, state, child) => Layout2(child: child),
+        routes: [compraDetalleRouter],
         navigatorKey: mainShellNavigatorKey)
   ],
 );

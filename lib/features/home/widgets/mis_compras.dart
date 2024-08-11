@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/features/shared/utils/utils.dart';
-import 'package:smart_spend_app/models/checkbox_rounded.dart';
+import 'package:smart_spend_app/features/shared/widgets/checkbox_rounded.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 
 class MisCompras extends ConsumerWidget {
@@ -55,6 +56,7 @@ class _ComprasCard extends ConsumerWidget {
             ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
           } else {
             ref.read(homeProvider.notifier).goDetalleCompra(compra: compra);
+            context.push('/compra-detalle');
             //ref.read(homeProvider.notifier).selectCompra(compra.id!);
           }
         },
