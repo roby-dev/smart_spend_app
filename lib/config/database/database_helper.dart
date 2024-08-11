@@ -44,7 +44,6 @@ class DatabaseHelper {
   }
 
   Future<void> initDatabase() async {
-    // Llama a database para asegurarte de que la base de datos está inicializada
     await database;
   }
 
@@ -70,40 +69,28 @@ class DatabaseHelper {
     final db = await database;
     final List<Map<String, dynamic>> compraMaps = await db.query('compra');
 
-    // Lista para almacenar las compras con nombres de detalles
     List<Compra> comprasConDetalles = [];
 
-    // Itera sobre cada compra recuperada
     for (var compraMap in compraMaps) {
-      // Crea una instancia de Compra desde el mapa
       Compra compra = Compra.fromJson(compraMap);
-
-      // Obtén los nombres de los detalles para esta compra
-      final List<String> nombresDetalles =
-          await getCompraDetalleNombres(compra.id!);
-
-      // Crea una nueva instancia de Compra con la lista de nombres de detalles
-      Compra compraConDetalles =
-          compra.copyWith(nombresDetalles: nombresDetalles);
-
-      // Añade la compra con detalles a la lista
+      final List<CompraDetalle> detalles =
+          await getCompraDetalleDeCompra(compra.id!);
+      Compra compraConDetalles = compra.copyWith(detalles: detalles);
       comprasConDetalles.add(compraConDetalles);
     }
 
     return comprasConDetalles;
   }
 
-  Future<List<String>> getCompraDetalleNombres(int compraId) async {
+  Future<List<CompraDetalle>> getCompraDetalleDeCompra(int compraId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'compra_detalle',
-      columns: ['nombre'],
       where: 'compra_id = ?',
       whereArgs: [compraId],
     );
 
-    // Extraer los nombres de los mapas y devolverlos como una lista de strings
-    return maps.map((map) => map['nombre'] as String).toList();
+    return maps.map((map) => CompraDetalle.fromJson(map)).toList();
   }
 
   Future<List<CompraDetalle>> getCompraDetalles(int compraId) async {
@@ -124,10 +111,19 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
-    // Opcionalmente elimina los detalles asociados
     await db.delete(
       'compra_detalle',
       where: 'compra_id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Add this method to delete a specific CompraDetalle by its id
+  Future<void> deleteCompraDetalle(int id) async {
+    final db = await database;
+    await db.delete(
+      'compra_detalle',
+      where: 'id = ?',
       whereArgs: [id],
     );
   }

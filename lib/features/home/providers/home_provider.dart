@@ -164,6 +164,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
   void goDetalleCompra({required Compra compra}) {
     selectCompra(compra);
     ref.read(compraDetalleProvider.notifier).loadCompraDetalles(compra.id!);
+    router.push('/compra-detalle');
   }
 }
 

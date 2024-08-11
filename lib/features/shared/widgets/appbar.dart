@@ -3,7 +3,7 @@ import 'package:smart_spend_app/constants/app_colors.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
-  final Size preferredSize = const Size(double.infinity, 40);
+  final Size preferredSize = const Size(double.infinity, 30);
 
   final bool showDeleteAction;
   final VoidCallback? onDelete;

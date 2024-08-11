@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/features/shared/utils/utils.dart';
@@ -39,6 +38,17 @@ class _ComprasCard extends ConsumerWidget {
     final isSelected = homeState.selectedCompras.contains(compra.id);
     final bool isMultiSelectMode = homeState.isComprasSelected;
 
+    // Calcula el total de los precios de los detalles
+    final double total = compra.detalles.fold(
+      0.0,
+      (sum, detalle) => sum + detalle.precio,
+    );
+
+    // Concatena los nombres de los detalles
+    final String nombresDetalles = compra.detalles.isNotEmpty
+        ? compra.detalles.map((detalle) => detalle.nombre).join(' - ')
+        : 'Aún no se agregaron compras';
+
     return Card(
       elevation: 0,
       color: AppColors.white,
@@ -56,15 +66,26 @@ class _ComprasCard extends ConsumerWidget {
             ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
           } else {
             ref.read(homeProvider.notifier).goDetalleCompra(compra: compra);
-            context.push('/compra-detalle');
-            //ref.read(homeProvider.notifier).selectCompra(compra.id!);
           }
         },
         contentPadding:
             const EdgeInsets.only(left: 20.0, right: 10.0, top: 10, bottom: 10),
-        title: Text(
-          compra.titulo,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w300),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              compra.titulo,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w300),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              Utils.FormattedDate(compraFecha: compra.fecha),
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                  color: AppColors.gray500),
+            ),
+          ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,9 +94,7 @@ class _ComprasCard extends ConsumerWidget {
               height: 15,
             ),
             Text(
-              compra.nombresDetalles.isNotEmpty
-                  ? compra.nombresDetalles.join('-')
-                  : 'Aún se agregaron compras',
+              nombresDetalles,
               style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w300,
@@ -84,12 +103,16 @@ class _ComprasCard extends ConsumerWidget {
             const SizedBox(
               height: 5,
             ),
-            Text(
-              Utils.FormattedDate(compraFecha: compra.fecha),
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
-                  color: AppColors.gray500),
+            Row(
+              children: [
+                Text(
+                  'Total: S/ ${total.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.gray700),
+                ),
+              ],
             ),
           ],
         ),

@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
   flutter_riverpod: ^2.5.1
   flutter_svg: ^2.0.10+1
   go_router: ^14.2.1
@@ -32,3 +34,17 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/images/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo_smart_icon.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#CF74ED"
+  image: assets/images/logo_smart.png
+  android_12:
+    image: assets/images/logo_smart.png
+    color: "#CF74ED"

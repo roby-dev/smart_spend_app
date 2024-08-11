@@ -25,13 +25,24 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   Future<void> addDetalle(CompraDetalle detalle) async {
     await _dbHelper.insertCompraDetalle(detalle);
     await loadCompraDetalles(detalle.compraId);
+    await ref.read(homeProvider.notifier).loadCompras();
   }
 
   Future<void> updateDetalle(int index, CompraDetalle updatedDetalle) async {
-    await _dbHelper.insertCompraDetalle(
-        updatedDetalle); // Usa insert para actualizar o reemplazar
+    await _dbHelper.insertCompraDetalle(updatedDetalle);
     state.detalles[index] = updatedDetalle;
     state = state.copyWith(detalles: List.from(state.detalles));
+    await ref.read(homeProvider.notifier).loadCompras();
+  }
+
+  Future<void> deleteSelectedDetalles() async {
+    for (var index in state.selectedDetalles) {
+      final detalle = state.detalles[index];
+      await _dbHelper.deleteCompraDetalle(detalle.id!);
+    }
+    toggleDetallesSelection();
+    await ref.read(homeProvider.notifier).loadCompras();
+    await loadCompraDetalles(state.compraId);
   }
 
   Future<void> showAddDetalleDialog({required BuildContext context}) {
@@ -74,17 +85,66 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
       ref.read(homeProvider.notifier).saveCompra(updatedCompra, []);
     }
   }
+
+  void toggleDetallesSelection() {
+    state = state.copyWith(isDetallesSelected: !state.isDetallesSelected);
+    if (!state.isDetallesSelected) {
+      deselectAllDetalles();
+    }
+  }
+
+  void toggleDetalleSelection(int index) {
+    final selectedDetalles = List<int>.from(state.selectedDetalles);
+    if (selectedDetalles.contains(index)) {
+      selectedDetalles.remove(index);
+    } else {
+      selectedDetalles.add(index);
+    }
+    state = state.copyWith(selectedDetalles: selectedDetalles);
+  }
+
+  void deselectAllDetalles() {
+    state = state.copyWith(
+      isDetallesSelected: false,
+      selectedDetalles: [],
+    );
+  }
+
+  String tituloScreen() {
+    if (!state.isDetallesSelected) return ' Detalles de la compra';
+    if (state.selectedDetalles.isEmpty) return ' Seleccione elementos';
+    if (state.selectedDetalles.length > 1) {
+      return ' ${state.selectedDetalles.length} elementos seleccionados';
+    } else {
+      return ' 1 elemento seleccionado';
+    }
+  }
 }
 
 class CompraDetalleState {
   final List<CompraDetalle> detalles;
   final int compraId;
+  final bool isDetallesSelected;
+  final List<int> selectedDetalles;
 
-  CompraDetalleState({this.detalles = const [], this.compraId = 0});
+  CompraDetalleState({
+    this.detalles = const [],
+    this.compraId = 0,
+    this.isDetallesSelected = false,
+    this.selectedDetalles = const [],
+  });
 
-  CompraDetalleState copyWith({List<CompraDetalle>? detalles, int? compraId}) {
+  CompraDetalleState copyWith({
+    List<CompraDetalle>? detalles,
+    int? compraId,
+    bool? isDetallesSelected,
+    List<int>? selectedDetalles,
+  }) {
     return CompraDetalleState(
-        detalles: detalles ?? this.detalles,
-        compraId: compraId ?? this.compraId);
+      detalles: detalles ?? this.detalles,
+      compraId: compraId ?? this.compraId,
+      isDetallesSelected: isDetallesSelected ?? this.isDetallesSelected,
+      selectedDetalles: selectedDetalles ?? this.selectedDetalles,
+    );
   }
 }

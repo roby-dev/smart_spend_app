@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:smart_spend_app/constants/app_colors.dart';
+import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
+import 'package:smart_spend_app/features/shared/widgets/appbar_2.dart';
 
 class Layout2 extends ConsumerStatefulWidget {
   const Layout2({
@@ -20,22 +20,16 @@ class Layout2 extends ConsumerStatefulWidget {
 class Layout2State extends ConsumerState<Layout2> {
   @override
   Widget build(BuildContext context) {
+    final compraDetalleState = ref.watch(compraDetalleProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_outlined),
-          onPressed: () {
-            if (widget.onBack != null) {
-              widget.onBack!();
-            } else {
-              context.pop();
-            }
-          },
-          color: AppColors.gray700,
-          iconSize: 30,
-        ),
-        backgroundColor: AppColors.gray100,
-        iconTheme: const IconThemeData(color: AppColors.black),
+      appBar: MyAppBar2(
+        isDetallesSelected: compraDetalleState.isDetallesSelected,
+        onBack: widget.onBack,
+        onCancel: () =>
+            ref.read(compraDetalleProvider.notifier).toggleDetallesSelection(),
+        onDelete: () =>
+            ref.read(compraDetalleProvider.notifier).deleteSelectedDetalles(),
       ),
       body: SafeArea(
         child: CustomScrollView(

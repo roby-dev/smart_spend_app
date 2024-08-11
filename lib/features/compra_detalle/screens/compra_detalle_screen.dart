@@ -50,35 +50,41 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
 
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: () {
-                _focusNode.requestFocus();
-              },
-              child: TextFormField(
-                controller: _titleController,
-                focusNode: _focusNode,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: AppColors.gray500,
-                      width: 2.0,
+            compraDetalleState.isDetallesSelected
+                ? Text(
+                    ref.read(compraDetalleProvider.notifier).tituloScreen(),
+                    style: const TextStyle(
+                        fontSize: 28, fontWeight: FontWeight.w200),
+                  )
+                : GestureDetector(
+                    onTap: () {
+                      _focusNode.requestFocus();
+                    },
+                    child: TextFormField(
+                      controller: _titleController,
+                      focusNode: _focusNode,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: AppColors.gray500,
+                            width: 2.0,
+                          ),
+                        ),
+                      ),
+                      style: const TextStyle(
+                          fontSize: 28, fontWeight: FontWeight.w200),
+                      // Se desactiva la edición directa para usar el detector de tap
+                      enabled: true,
                     ),
                   ),
-                ),
-                style:
-                    const TextStyle(fontSize: 28, fontWeight: FontWeight.w200),
-                // Se desactiva la edición directa para usar el detector de tap
-                enabled: true,
-              ),
-            ),
             const SizedBox(
-              height: 26,
+              height: 10,
             ),
             Expanded(
               child: Container(

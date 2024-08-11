@@ -1,14 +1,16 @@
+import 'package:smart_spend_app/models/compra_detalle_model.dart';
+
 class Compra {
   final int? id;
   final String titulo;
   final DateTime fecha;
-  final List<String> nombresDetalles; // Nueva propiedad
+  final List<CompraDetalle> detalles; // Nueva propiedad
 
   Compra({
     this.id,
     required this.titulo,
     required this.fecha,
-    this.nombresDetalles = const [], // Inicializa como una lista vacía
+    this.detalles = const [], // Inicializa como una lista vacía
   });
 
   Map<String, dynamic> toJson() => {
@@ -27,14 +29,13 @@ class Compra {
     int? id,
     String? titulo,
     DateTime? fecha,
-    List<String>? nombresDetalles, // Nuevo parámetro opcional
+    List<CompraDetalle>? detalles, // Nuevo parámetro opcional
   }) {
     return Compra(
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
       fecha: fecha ?? this.fecha,
-      nombresDetalles:
-          nombresDetalles ?? this.nombresDetalles, // Usar el nuevo parámetro
+      detalles: detalles ?? this.detalles, // Usar el nuevo parámetro
     );
   }
 }
