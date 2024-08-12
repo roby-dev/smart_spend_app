@@ -20,6 +20,10 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
   @override
   void initState() {
     super.initState();
+    Future.microtask(() {
+      ref.read(compraDetalleProvider.notifier).initDatos();
+    });
+
     final compra = ref.read(homeProvider).selectedCompra;
     _titleController = TextEditingController(text: compra?.titulo ?? '');
     _focusNode = FocusNode();
@@ -96,6 +100,7 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
                   children: [
                     const Expanded(child: MisComprasDetalle()),
                     Container(
+                      width: double.infinity,
                       padding: const EdgeInsets.all(16.0),
                       decoration: const BoxDecoration(
                         border: Border(
@@ -105,33 +110,18 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
                           ),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Total:',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'S/ ${total.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        'S/ ${total.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w300,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(
-              height: 70,
-            )
           ],
         ),
       ),

@@ -39,12 +39,12 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/logo_smart_icon.png"
+  image_path: "assets/images/logo_smart_icon_morado.png"
   min_sdk_android: 21
 
 flutter_native_splash:
   color: "#DA91F1"
-  image: assets/images/logo_smart.png
+  image: assets/images/splash_morado.png
   android_12:
-    image: assets/images/logo_smart.png
+    image: assets/images/splash_morado.png
     color: "#DA91F1"

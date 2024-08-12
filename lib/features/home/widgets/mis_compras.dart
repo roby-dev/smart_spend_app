@@ -70,22 +70,9 @@ class _ComprasCard extends ConsumerWidget {
         },
         contentPadding:
             const EdgeInsets.only(left: 20.0, right: 10.0, top: 10, bottom: 10),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              compra.titulo,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w300),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              Utils.FormattedDate(compraFecha: compra.fecha),
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
-                  color: AppColors.gray500),
-            ),
-          ],
+        title: Text(
+          compra.titulo,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w300),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,24 +82,24 @@ class _ComprasCard extends ConsumerWidget {
             ),
             Text(
               nombresDetalles,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w300),
+            ),
+            const SizedBox(
+              height: 15,
+            ),
+            Text(
+              'Total: S/ ${total.toStringAsFixed(2)}',
               style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w300,
                   color: AppColors.gray700),
             ),
-            const SizedBox(
-              height: 5,
-            ),
-            Row(
-              children: [
-                Text(
-                  'Total: S/ ${total.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.gray700),
-                ),
-              ],
+            Text(
+              Utils.FormattedDate(compraFecha: compra.fecha),
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                  color: AppColors.gray500),
             ),
           ],
         ),

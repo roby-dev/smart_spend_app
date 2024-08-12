@@ -16,6 +16,10 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   final StateNotifierProviderRef ref;
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
+  void initDatos() {
+    state = state.copyWith(isEditing: false, isDetallesSelected: false);
+  }
+
   Future<List<CompraDetalle>> loadCompraDetalles(int compraId) async {
     final detalles = await _dbHelper.getCompraDetalles(compraId);
     state = state.copyWith(detalles: detalles, compraId: compraId);
@@ -45,6 +49,11 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
     await loadCompraDetalles(state.compraId);
   }
 
+  Future<void> deleteCurrentCompraDetalle(int compraDetalleId) async {
+    await _dbHelper.deleteCompraDetalle(compraDetalleId);
+    await loadCompraDetalles(state.compraId);
+  }
+
   Future<void> showAddDetalleDialog({required BuildContext context}) {
     final TextEditingController nombreController = TextEditingController();
     final TextEditingController precioController = TextEditingController();
@@ -61,7 +70,7 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
             final nombre = nombreController.text.trim();
             final precio = double.tryParse(precioController.text) ?? 0.0;
 
-            if (nombre.isNotEmpty && precio > 0) {
+            if (nombre.isNotEmpty && precio >= 0) {
               ref.read(compraDetalleProvider.notifier).addDetalle(
                     CompraDetalle(
                       nombre: nombre,
@@ -119,6 +128,10 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
       return ' 1 elemento seleccionado';
     }
   }
+
+  void toggleEditing() {
+    state = state.copyWith(isEditing: !state.isEditing);
+  }
 }
 
 class CompraDetalleState {
@@ -126,12 +139,14 @@ class CompraDetalleState {
   final int compraId;
   final bool isDetallesSelected;
   final List<int> selectedDetalles;
+  final bool isEditing;
 
   CompraDetalleState({
     this.detalles = const [],
     this.compraId = 0,
     this.isDetallesSelected = false,
     this.selectedDetalles = const [],
+    this.isEditing = false,
   });
 
   CompraDetalleState copyWith({
@@ -139,12 +154,13 @@ class CompraDetalleState {
     int? compraId,
     bool? isDetallesSelected,
     List<int>? selectedDetalles,
+    bool? isEditing,
   }) {
     return CompraDetalleState(
-      detalles: detalles ?? this.detalles,
-      compraId: compraId ?? this.compraId,
-      isDetallesSelected: isDetallesSelected ?? this.isDetallesSelected,
-      selectedDetalles: selectedDetalles ?? this.selectedDetalles,
-    );
+        detalles: detalles ?? this.detalles,
+        compraId: compraId ?? this.compraId,
+        isDetallesSelected: isDetallesSelected ?? this.isDetallesSelected,
+        selectedDetalles: selectedDetalles ?? this.selectedDetalles,
+        isEditing: isEditing ?? this.isEditing);
   }
 }
