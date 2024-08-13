@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
+import 'package:smart_spend_app/features/shared/utils/utils.dart';
 import 'package:smart_spend_app/models/compra_detalle_model.dart';
 
 class MisComprasDetalle extends ConsumerWidget {
@@ -98,7 +99,6 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
   void _toggleEditing() {
     ref.read(compraDetalleProvider.notifier).toggleEditing();
     if (ref.watch(compraDetalleProvider).isEditing) {
-      // Request focus for the name field when entering edit mode
       Future.delayed(const Duration(milliseconds: 100), () {
         _nombreFocusNode.requestFocus();
       });
@@ -113,16 +113,18 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
     final newPrecioText = _precioController.text.trim();
     final newPrecio = double.tryParse(newPrecioText) ?? 0.00;
 
-    _precioController.text = newPrecio.toStringAsFixed(2);
+    final formattedPrecio = double.parse(newPrecio.toStringAsFixed(2));
+    _precioController.text = formattedPrecio.toStringAsFixed(2);
 
     if (newNombre.isNotEmpty &&
         (newNombre != widget.compraDetalle.nombre ||
-            newPrecio != widget.compraDetalle.precio)) {
+            formattedPrecio != widget.compraDetalle.precio)) {
       final updatedDetalle = CompraDetalle(
         id: widget.compraDetalle.id,
         nombre: newNombre,
-        precio: newPrecio,
+        precio: formattedPrecio,
         compraId: widget.compraDetalle.compraId,
+        fecha: widget.compraDetalle.fecha, // Preservar la fecha original
       );
 
       ref
@@ -136,76 +138,86 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
     return Container(
       color: widget.isSelected ? AppColors.gray100 : AppColors.white,
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: TextField(
-              controller: _nombreController,
-              focusNode: _nombreFocusNode,
-              decoration: const InputDecoration(
-                hintText: 'Nombre',
-                border: InputBorder.none,
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: AppColors.gray500,
-                    width: 1.0,
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _nombreController,
+                  focusNode: _nombreFocusNode,
+                  decoration: const InputDecoration(
+                    hintText: 'Nombre',
+                    border: InputBorder.none,
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: AppColors.gray500,
+                        width: 1.0,
+                      ),
+                    ),
+                    contentPadding: EdgeInsets.zero,
                   ),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  onSubmitted: (_) => _saveDetalle(),
                 ),
-                contentPadding: EdgeInsets.zero,
               ),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w400,
+              const SizedBox(width: 8.0), // Space between fields
+              const Text(
+                'S/',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w300,
+                  color: AppColors.gray500,
+                ),
               ),
-              onSubmitted: (_) => _saveDetalle(),
-            ),
+              SizedBox(
+                width: 80,
+                child: TextField(
+                  controller: _precioController,
+                  focusNode: _precioFocusNode,
+                  decoration: const InputDecoration(
+                    hintText: 'Precio',
+                    border: InputBorder.none,
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(
+                        color: AppColors.gray500,
+                        width: 1.0,
+                      ),
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w300,
+                    color: AppColors.gray700,
+                  ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  onSubmitted: (_) => _saveDetalle(),
+                ),
+              ),
+              const SizedBox(width: 8.0), // Space before icon
+              const IconButton(
+                onPressed: null,
+                icon: Icon(
+                  Icons.close,
+                  color: AppColors.primary500, // Set the color of the icon
+                  size: 20.0, // Reduce the size of the icon
+                ),
+              ),
+            ],
           ),
-          const Text(
-            'S/',
-            style: TextStyle(
-              fontSize: 18,
+          const SizedBox(height: 4.0), // Space between fields and date
+          Text(
+            Utils.FormattedDate(compraFecha: widget.compraDetalle.fecha),
+            style: const TextStyle(
+              fontSize: 14,
               fontWeight: FontWeight.w300,
               color: AppColors.gray500,
-            ),
-            textAlign: TextAlign.end,
-          ),
-          SizedBox(
-            width: 55,
-            child: TextField(
-              textAlign: TextAlign.end,
-              controller: _precioController,
-              focusNode: _precioFocusNode,
-              decoration: const InputDecoration(
-                hintText: 'Precio',
-                border: InputBorder.none,
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: AppColors.gray500,
-                    width: 1.0,
-                  ),
-                ),
-                contentPadding: EdgeInsets.zero,
-              ),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w300,
-                color: AppColors.gray700,
-              ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              onSubmitted: (_) => _saveDetalle(),
-            ),
-          ),
-          IconButton(
-            onPressed: () async {
-              await ref
-                  .read(compraDetalleProvider.notifier)
-                  .deleteCurrentCompraDetalle(widget.compraDetalle.id!);
-            },
-            icon: const Icon(
-              Icons.delete_outline_sharp,
-              color: AppColors.primary400,
-              size: 20.0,
             ),
           ),
         ],

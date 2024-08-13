@@ -36,6 +36,7 @@ class DatabaseHelper {
             nombre TEXT,
             precio REAL,
             compra_id INTEGER,
+            fecha TEXT,
             FOREIGN KEY (compra_id) REFERENCES compra (id)
           )
         ''');

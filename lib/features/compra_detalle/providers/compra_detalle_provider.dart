@@ -56,7 +56,10 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
 
   Future<void> showAddDetalleDialog({required BuildContext context}) {
     final TextEditingController nombreController = TextEditingController();
-    final TextEditingController precioController = TextEditingController();
+    final TextEditingController precioController =
+        TextEditingController(text: '0.00');
+    late FocusNode nombreFocusNode = FocusNode();
+    late FocusNode precioFocusNode = FocusNode();
 
     return showDialog(
       context: context,
@@ -64,6 +67,8 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
       builder: (BuildContext context) {
         return AddDetalleDialog(
           nombreController: nombreController,
+          nombreFocusNode: nombreFocusNode,
+          preciFocusNode: precioFocusNode,
           precioController: precioController,
           compraId: state.compraId,
           onPressed: () {
@@ -73,10 +78,10 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
             if (nombre.isNotEmpty && precio >= 0) {
               ref.read(compraDetalleProvider.notifier).addDetalle(
                     CompraDetalle(
-                      nombre: nombre,
-                      precio: precio,
-                      compraId: state.compraId,
-                    ),
+                        nombre: nombre,
+                        precio: precio,
+                        compraId: state.compraId,
+                        fecha: DateTime.now()),
                   );
             }
             Navigator.of(context).pop();

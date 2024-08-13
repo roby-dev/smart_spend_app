@@ -6,16 +6,24 @@ class AddDetalleDialog extends StatelessWidget {
 
   final TextEditingController nombreController;
   final TextEditingController precioController;
+  final FocusNode nombreFocusNode;
+  final FocusNode preciFocusNode;
 
   const AddDetalleDialog(
       {super.key,
       required this.compraId,
       required this.onPressed,
       required this.nombreController,
-      required this.precioController});
+      required this.precioController,
+      required this.nombreFocusNode,
+      required this.preciFocusNode});
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      nombreFocusNode.requestFocus();
+    });
+
     return AlertDialog(
       title: const Text(
         'Añadir Detalle',
@@ -25,16 +33,24 @@ class AddDetalleDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
-            textCapitalization: TextCapitalization.sentences,
-            controller: nombreController,
-            decoration: const InputDecoration(labelText: 'Nombre'),
-            style: const TextStyle(fontWeight: FontWeight.w300),
-          ),
+              textCapitalization: TextCapitalization.sentences,
+              controller: nombreController,
+              focusNode: nombreFocusNode,
+              decoration: const InputDecoration(labelText: 'Nombre'),
+              style: const TextStyle(fontWeight: FontWeight.w300),
+              onSubmitted: (value) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  preciFocusNode.requestFocus();
+                  precioController.text = "";
+                });
+              }),
           TextField(
             controller: precioController,
+            focusNode: preciFocusNode,
             decoration: const InputDecoration(labelText: 'Precio'),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             style: const TextStyle(fontWeight: FontWeight.w300),
+            onSubmitted: (value) => onPressed(),
           ),
         ],
       ),
