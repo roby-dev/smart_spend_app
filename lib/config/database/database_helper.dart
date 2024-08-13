@@ -2,6 +2,7 @@ import 'package:smart_spend_app/models/compra_detalle_model.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'dart:convert';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -127,5 +128,30 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<String> exportToJson() async {
+    final compras = await getCompras();
+    final List<Map<String, dynamic>> compraList =
+        compras.map((compra) => compra.toJson()).toList();
+    return jsonEncode(compraList);
+  }
+
+  Future<void> importFromJson(String jsonString) async {
+    final List<dynamic> decodedData = jsonDecode(jsonString);
+
+    for (var compraMap in decodedData) {
+      final compra = Compra.fromJson(compraMap);
+
+      // Inserta cada compra en la base de datos
+      final int compraId = await insertCompra(compra);
+
+      // Inserta los detalles de la compra
+      for (var detalle in compraMap['detalles']) {
+        final compraDetalle =
+            CompraDetalle.fromJson(detalle).copyWith(compraId: compraId);
+        await insertCompraDetalle(compraDetalle);
+      }
+    }
   }
 }

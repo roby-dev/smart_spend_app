@@ -3,7 +3,7 @@ import 'package:smart_spend_app/constants/app_colors.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
-  final Size preferredSize = const Size(double.infinity, 30);
+  final Size preferredSize = const Size(double.infinity, 56);
 
   final bool showDeleteAction;
   final VoidCallback? onDelete;
@@ -16,16 +16,9 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onCancel,
   });
 
-  void onSelected(BuildContext context, int item) {
-    switch (item) {
-      case 0:
-        print('Cambiar perfil seleccionado');
-        break;
-      case 1:
-        print('Configuración seleccionada');
-        break;
-    }
-  }
+  Future<void> exportToJson(BuildContext context) async {}
+
+  Future<void> importFromJson(BuildContext context) async {}
 
   @override
   Widget build(BuildContext context) {
@@ -47,8 +40,14 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 iconSize: 30,
               )
             : PopupMenuButton<int>(
-                onSelected: (item) => onSelected(context, item),
-                icon: const Icon(Icons.settings),
+                onSelected: (item) {
+                  if (item == 0) {
+                    exportToJson(context);
+                  } else if (item == 1) {
+                    importFromJson(context);
+                  }
+                },
+                icon: const Icon(Icons.more_vert),
                 color: AppColors.gray100,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
@@ -56,11 +55,11 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 itemBuilder: (context) => [
                   const PopupMenuItem<int>(
                     value: 0,
-                    child: Text('Cambiar perfil'),
+                    child: Text('Exportar a JSON'),
                   ),
                   const PopupMenuItem<int>(
                     value: 1,
-                    child: Text('Configuración'),
+                    child: Text('Importar desde JSON'),
                   ),
                 ],
               ),
