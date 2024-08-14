@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "570866028708",
+    "project_id": "smartspendapp",
+    "storage_bucket": "smartspendapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:570866028708:android:3251b4366524816162d631",
+        "android_client_info": {
+          "package_name": "com.example.smart_spend_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9ospv_tJG4Beqrof3CgEd6FO2NrRSgpc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
