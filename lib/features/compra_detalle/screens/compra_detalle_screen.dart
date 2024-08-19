@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
 import 'package:smart_spend_app/features/compra_detalle/widgets/mis_compras_detalle.dart';
-import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 
 class CompraDetalleScreen extends ConsumerStatefulWidget {
   const CompraDetalleScreen({super.key});
@@ -14,26 +13,25 @@ class CompraDetalleScreen extends ConsumerStatefulWidget {
 }
 
 class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
-  late TextEditingController _titleController;
-  late FocusNode _focusNode;
+  final TextEditingController _titleController =
+      TextEditingController(text: '');
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(compraDetalleProvider.notifier).initDatos();
-    });
+    Future.microtask(() async {
+      await ref.read(compraDetalleProvider.notifier).initDatos();
+      _titleController.text =
+          ref.watch(compraDetalleProvider).compra?.titulo ?? '';
 
-    final compra = ref.read(homeProvider).selectedCompra;
-    _titleController = TextEditingController(text: compra?.titulo ?? '');
-    _focusNode = FocusNode();
-
-    _focusNode.addListener(() {
-      if (!_focusNode.hasFocus) {
-        ref
-            .read(compraDetalleProvider.notifier)
-            .saveTitle(newTitle: _titleController.text.trim());
-      }
+      _focusNode.addListener(() {
+        if (!_focusNode.hasFocus) {
+          ref
+              .read(compraDetalleProvider.notifier)
+              .saveTitle(newTitle: _titleController.text.trim());
+        }
+      });
     });
   }
 

@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/config/database/database_helper.dart';
 import 'package:smart_spend_app/config/router/app_router.dart';
 import 'package:smart_spend_app/config/theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +18,9 @@ void main() async {
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]);
+
+  initializeDateFormatting('es_PE', null);
+  await Firebase.initializeApp();
 
   runApp(const ProviderScope(child: MainApp()));
 }

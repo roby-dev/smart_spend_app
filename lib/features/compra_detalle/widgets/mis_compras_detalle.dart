@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
+import 'package:smart_spend_app/features/compra_detalle/widgets/mis_compras_detalle_skeleton.dart';
 import 'package:smart_spend_app/features/shared/utils/utils.dart';
 import 'package:smart_spend_app/models/compra_detalle_model.dart';
 
@@ -16,22 +17,34 @@ class MisComprasDetalle extends ConsumerWidget {
       onTap: () {
         FocusScope.of(context).unfocus();
       },
-      child: ListView.separated(
-        itemCount: compraDetalleState.detalles.length,
-        separatorBuilder: (context, index) => const Divider(
-          color: AppColors.gray100,
-          height: 0, // Reduce the space between the items
-          thickness: 1,
-        ),
-        itemBuilder: (context, index) {
-          final compraDetalle = compraDetalleState.detalles[index];
-          return _ComprasDetalleRow(
-            compraDetalle: compraDetalle,
-            index: index,
-            isSelected: compraDetalleState.selectedDetalles.contains(index),
-          );
-        },
-      ),
+      child: compraDetalleState.isLoading
+          ? ListView.separated(
+              itemCount: 5, // Muestra 5 skeletons
+              separatorBuilder: (context, index) => const Divider(
+                color: AppColors.gray100,
+                height: 0,
+                thickness: 1,
+              ),
+              itemBuilder: (context, index) =>
+                  const ComprasDetalleRowSkeleton(),
+            )
+          : ListView.separated(
+              itemCount: compraDetalleState.detalles.length,
+              separatorBuilder: (context, index) => const Divider(
+                color: AppColors.gray100,
+                height: 0, // Reduce el espacio entre los ítems
+                thickness: 1,
+              ),
+              itemBuilder: (context, index) {
+                final compraDetalle = compraDetalleState.detalles[index];
+                return _ComprasDetalleRow(
+                  compraDetalle: compraDetalle,
+                  index: index,
+                  isSelected:
+                      compraDetalleState.selectedDetalles.contains(index),
+                );
+              },
+            ),
     );
   }
 }
@@ -108,7 +121,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
     }
   }
 
-  void _saveDetalle() {
+  Future<void> _saveDetalle() async {
     final newNombre = _nombreController.text.trim();
     final newPrecioText = _precioController.text.trim();
     final newPrecio = double.tryParse(newPrecioText) ?? 0.00;
@@ -127,7 +140,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
         fecha: widget.compraDetalle.fecha, // Preservar la fecha original
       );
 
-      ref
+      await ref
           .read(compraDetalleProvider.notifier)
           .updateDetalle(widget.index, updatedDetalle);
     }
@@ -162,7 +175,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                     fontSize: 18,
                     fontWeight: FontWeight.w400,
                   ),
-                  onSubmitted: (_) => _saveDetalle(),
+                  //onSubmitted: (_) async => await _saveDetalle(),
                 ),
               ),
               const SizedBox(width: 8.0), // Space between fields
@@ -197,7 +210,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                   ),
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  onSubmitted: (_) => _saveDetalle(),
+                  //onSubmitted: (_) async => await _saveDetalle(),
                 ),
               ),
               const SizedBox(width: 8.0), // Space before icon

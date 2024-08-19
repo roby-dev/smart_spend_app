@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/config/database/database_helper.dart';
 import 'package:smart_spend_app/config/router/app_router.dart';
-import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 import 'package:smart_spend_app/models/compra_detalle_model.dart';
 import 'package:smart_spend_app/features/home/widgets/dialog_agregar_editar_compra.dart';
@@ -161,23 +160,22 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
   }
 
-  void goDetalleCompra({required Compra compra}) {
+  Future<void> goDetalleCompra({required Compra compra}) async {
     selectCompra(compra);
-    ref.read(compraDetalleProvider.notifier).loadCompraDetalles(compra.id!);
     router.push('/compra-detalle');
   }
 }
 
 class HomeState {
   final List<Compra> compras;
-  final int selectedCompraId;
+  final int? selectedCompraId;
   final bool isComprasSelected;
   final List<int> selectedCompras;
   Compra? selectedCompra;
 
   HomeState(
       {this.compras = const [],
-      this.selectedCompraId = -1,
+      this.selectedCompraId,
       this.isComprasSelected = false,
       this.selectedCompras = const [],
       this.selectedCompra});

@@ -4,7 +4,7 @@ class Compra {
   final int? id;
   final String titulo;
   final DateTime fecha;
-  final List<CompraDetalle> detalles; // Nueva propiedad
+  List<CompraDetalle> detalles; // Nueva propiedad
 
   Compra({
     this.id,
@@ -18,6 +18,17 @@ class Compra {
         'titulo': titulo,
         'fecha': fecha.toIso8601String(),
       };
+
+  Map<String, dynamic> toJsonExport() {
+    return {
+      'id': id,
+      'titulo': titulo,
+      'fecha': fecha.toIso8601String(),
+      'detalles': detalles
+          ?.map((detalle) => detalle.toJson())
+          .toList(), // Incluir detalles en el JSON
+    };
+  }
 
   factory Compra.fromJson(Map<String, dynamic> json) => Compra(
         id: json['id'],

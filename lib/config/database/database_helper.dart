@@ -130,10 +130,28 @@ class DatabaseHelper {
     );
   }
 
+  Future<List<Compra>> getComprasDetalles() async {
+    final db = await database;
+    final List<Map<String, dynamic>> compraMaps = await db.query('compra');
+
+    List<Compra> comprasConDetalles = [];
+
+    for (var compraMap in compraMaps) {
+      Compra compra = Compra.fromJson(compraMap);
+      final List<CompraDetalle> detalles =
+          await getCompraDetalleDeCompra(compra.id!);
+      compra = compra.copyWith(
+          detalles: detalles); // Asegúrate de copiar los detalles a la compra
+      comprasConDetalles.add(compra);
+    }
+
+    return comprasConDetalles;
+  }
+
   Future<String> exportToJson() async {
-    final compras = await getCompras();
+    final compras = await getComprasDetalles();
     final List<Map<String, dynamic>> compraList =
-        compras.map((compra) => compra.toJson()).toList();
+        compras.map((compra) => compra.toJsonExport()).toList();
     return jsonEncode(compraList);
   }
 

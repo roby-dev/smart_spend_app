@@ -4,6 +4,7 @@ import 'package:smart_spend_app/config/database/database_helper.dart';
 import 'package:smart_spend_app/features/compra_detalle/widgets/dialog_add_detalle.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/models/compra_model.dart';
 
 final compraDetalleProvider =
     StateNotifierProvider<CompraDetalleNotifier, CompraDetalleState>(
@@ -16,13 +17,21 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   final StateNotifierProviderRef ref;
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  void initDatos() {
-    state = state.copyWith(isEditing: false, isDetallesSelected: false);
+  Future<void> initDatos() async {
+    state = state.copyWith(
+        isEditing: false,
+        isDetallesSelected: false,
+        detalles: [],
+        isLoading: true,
+        compra: ref.read(homeProvider).selectedCompra);
+
+    await loadCompraDetalles(ref.read(homeProvider).selectedCompraId!);
   }
 
   Future<List<CompraDetalle>> loadCompraDetalles(int compraId) async {
     final detalles = await _dbHelper.getCompraDetalles(compraId);
-    state = state.copyWith(detalles: detalles, compraId: compraId);
+    state = state.copyWith(
+        detalles: detalles, compraId: compraId, isLoading: false);
     return detalles;
   }
 
@@ -33,10 +42,12 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   }
 
   Future<void> updateDetalle(int index, CompraDetalle updatedDetalle) async {
+    final newDetalles = List<CompraDetalle>.from(state.detalles);
+    newDetalles[index] = updatedDetalle;
+    state = state.copyWith(detalles: List.from(newDetalles));
     await _dbHelper.insertCompraDetalle(updatedDetalle);
-    state.detalles[index] = updatedDetalle;
-    state = state.copyWith(detalles: List.from(state.detalles));
     await ref.read(homeProvider.notifier).loadCompras();
+    //initDatos();
   }
 
   Future<void> deleteSelectedDetalles() async {
@@ -45,7 +56,7 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
       await _dbHelper.deleteCompraDetalle(detalle.id!);
     }
     toggleDetallesSelection();
-    await ref.read(homeProvider.notifier).loadCompras();
+    ref.read(homeProvider.notifier).loadCompras();
     await loadCompraDetalles(state.compraId);
   }
 
@@ -61,6 +72,14 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
     late FocusNode nombreFocusNode = FocusNode();
     late FocusNode precioFocusNode = FocusNode();
 
+    precioFocusNode.addListener(() {
+      if (precioFocusNode.hasFocus) {
+        if (precioController.text == '0.00' || precioController.text == '0') {
+          precioController.clear();
+        }
+      }
+    });
+
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -71,7 +90,7 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
           preciFocusNode: precioFocusNode,
           precioController: precioController,
           compraId: state.compraId,
-          onPressed: () {
+          onPressed: () async {
             final nombre = nombreController.text.trim();
             final precio = double.tryParse(precioController.text) ?? 0.0;
 
@@ -141,18 +160,21 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
 
 class CompraDetalleState {
   final List<CompraDetalle> detalles;
+  final Compra? compra;
   final int compraId;
   final bool isDetallesSelected;
   final List<int> selectedDetalles;
   final bool isEditing;
+  final bool isLoading;
 
-  CompraDetalleState({
-    this.detalles = const [],
-    this.compraId = 0,
-    this.isDetallesSelected = false,
-    this.selectedDetalles = const [],
-    this.isEditing = false,
-  });
+  CompraDetalleState(
+      {this.detalles = const [],
+      this.compraId = 0,
+      this.isDetallesSelected = false,
+      this.selectedDetalles = const [],
+      this.isEditing = false,
+      this.isLoading = false,
+      this.compra});
 
   CompraDetalleState copyWith({
     List<CompraDetalle>? detalles,
@@ -160,12 +182,16 @@ class CompraDetalleState {
     bool? isDetallesSelected,
     List<int>? selectedDetalles,
     bool? isEditing,
+    bool? isLoading,
+    Compra? compra,
   }) {
     return CompraDetalleState(
         detalles: detalles ?? this.detalles,
         compraId: compraId ?? this.compraId,
         isDetallesSelected: isDetallesSelected ?? this.isDetallesSelected,
         selectedDetalles: selectedDetalles ?? this.selectedDetalles,
-        isEditing: isEditing ?? this.isEditing);
+        isEditing: isEditing ?? this.isEditing,
+        isLoading: isLoading ?? this.isLoading,
+        compra: compra ?? this.compra);
   }
 }
