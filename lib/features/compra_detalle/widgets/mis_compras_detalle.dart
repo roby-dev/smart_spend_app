@@ -19,7 +19,7 @@ class MisComprasDetalle extends ConsumerWidget {
       },
       child: compraDetalleState.isLoading
           ? ListView.separated(
-              itemCount: 5, // Muestra 5 skeletons
+              itemCount: 2, // Muestra 5 skeletons
               separatorBuilder: (context, index) => const Divider(
                 color: AppColors.gray100,
                 height: 0,
@@ -148,9 +148,8 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: widget.isSelected ? AppColors.gray100 : AppColors.white,
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+    return Padding(
+      padding: const EdgeInsets.only(right: 0, left: 15, bottom: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -172,8 +171,9 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                     contentPadding: EdgeInsets.zero,
                   ),
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.w400,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   //onSubmitted: (_) async => await _saveDetalle(),
                 ),
@@ -182,14 +182,18 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
               const Text(
                 'S/',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: FontWeight.w300,
                   color: AppColors.gray500,
                 ),
               ),
+              const SizedBox(
+                width: 5.0,
+              ),
               SizedBox(
-                width: 80,
+                width: 70,
                 child: TextField(
+                  textAlign: TextAlign.end,
                   controller: _precioController,
                   focusNode: _precioFocusNode,
                   decoration: const InputDecoration(
@@ -204,7 +208,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                     contentPadding: EdgeInsets.zero,
                   ),
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.w300,
                     color: AppColors.gray700,
                   ),
@@ -213,10 +217,13 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                   //onSubmitted: (_) async => await _saveDetalle(),
                 ),
               ),
-              const SizedBox(width: 8.0), // Space before icon
-              const IconButton(
-                onPressed: null,
-                icon: Icon(
+              IconButton(
+                onPressed: () {
+                  ref
+                      .read(compraDetalleProvider.notifier)
+                      .deleteCurrentCompraDetalle(widget.compraDetalle.id!);
+                },
+                icon: const Icon(
                   Icons.close,
                   color: AppColors.primary500, // Set the color of the icon
                   size: 20.0, // Reduce the size of the icon
@@ -224,7 +231,6 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
               ),
             ],
           ),
-          const SizedBox(height: 4.0), // Space between fields and date
           Text(
             Utils.FormattedDate(compraFecha: widget.compraDetalle.fecha),
             style: const TextStyle(

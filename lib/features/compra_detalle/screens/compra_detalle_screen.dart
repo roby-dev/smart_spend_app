@@ -21,7 +21,7 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
   void initState() {
     super.initState();
     Future.microtask(() async {
-      await ref.read(compraDetalleProvider.notifier).initDatos();
+      await ref.read(compraDetalleProvider.notifier).initDatos(withLoad: true);
       _titleController.text =
           ref.watch(compraDetalleProvider).compra?.titulo ?? '';
 

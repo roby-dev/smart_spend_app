@@ -8,14 +8,11 @@ class RoundedCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Transform.scale(
-      scale: 1.2,
-      child: Checkbox(
-        value: value,
-        onChanged: onChanged,
-        shape: const CircleBorder(),
-        side: BorderSide(color: Theme.of(context).primaryColor),
-      ),
+    return Checkbox(
+      value: value,
+      onChanged: onChanged,
+      shape: const CircleBorder(),
+      side: BorderSide(color: Theme.of(context).primaryColor),
     );
   }
 }

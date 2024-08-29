@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/config/database/database_helper.dart';
 import 'package:smart_spend_app/config/router/app_router.dart';
+import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 import 'package:smart_spend_app/models/compra_detalle_model.dart';
 import 'package:smart_spend_app/features/home/widgets/dialog_agregar_editar_compra.dart';
@@ -17,6 +18,8 @@ class HomeNotifier extends StateNotifier<HomeState> {
   final StateNotifierProviderRef ref;
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final GoRouter router = appRouter;
+
+  GlobalKey? dialogAgregarCompraKey;
 
   Future<void> saveCompra(Compra compra, List<CompraDetalle> detalles) async {
     final compraId = await _dbHelper.insertCompra(compra);
@@ -96,12 +99,14 @@ class HomeNotifier extends StateNotifier<HomeState> {
     });
 
     final homeNotifier = ref.read(homeProvider.notifier);
+    dialogAgregarCompraKey = GlobalKey();
 
     return showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AddEditComprasDialog(
+            key: dialogAgregarCompraKey,
             title: compra != null ? 'Editar compra' : 'Nueva compra',
             onPressed: () {
               _handleSaveCompra(
@@ -134,24 +139,28 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   Future<void> showDeleteConfirmationDialog(
       {required BuildContext context, int? compraId}) async {
+    dialogAgregarCompraKey = GlobalKey();
+
     return showDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
-        return DeleteConfirmationDialog(onPressed: () {
-          if (compraId != null) {
-            deleteCompra(compraId);
-          } else {
-            deleteSelectedCompras();
-          }
-          Navigator.of(context).pop();
-        });
+        return DeleteConfirmationDialog(
+            key: dialogAgregarCompraKey,
+            onPressed: () {
+              if (compraId != null) {
+                deleteCompra(compraId);
+              } else {
+                deleteSelectedCompras();
+              }
+              Navigator.of(context).pop();
+            });
       },
     );
   }
 
   String tituloScreen() {
-    if (!state.isComprasSelected) return ' Mis compras';
+    if (!state.isComprasSelected) return ' Mis listas';
     if (state.selectedCompras.isEmpty) return ' Seleccione elementos';
     if (state.selectedCompras.length > 1) {
       return ' ${state.selectedCompras.length} elementos seleccionados';
@@ -162,6 +171,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   Future<void> goDetalleCompra({required Compra compra}) async {
     selectCompra(compra);
+    ref.read(compraDetalleProvider.notifier).initLoading();
     router.push('/compra-detalle');
   }
 }

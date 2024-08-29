@@ -17,7 +17,9 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   final StateNotifierProviderRef ref;
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  Future<void> initDatos() async {
+  GlobalKey? dialogAgregarDetalleKey;
+
+  Future<void> initDatos({required bool withLoad}) async {
     state = state.copyWith(
         isEditing: false,
         isDetallesSelected: false,
@@ -25,7 +27,13 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
         isLoading: true,
         compra: ref.read(homeProvider).selectedCompra);
 
-    await loadCompraDetalles(ref.read(homeProvider).selectedCompraId!);
+    if (withLoad) {
+      await loadCompraDetalles(ref.read(homeProvider).selectedCompraId!);
+    }
+  }
+
+  void initLoading() {
+    state = state.copyWith(isLoading: true);
   }
 
   Future<List<CompraDetalle>> loadCompraDetalles(int compraId) async {
@@ -80,11 +88,14 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
       }
     });
 
+    dialogAgregarDetalleKey = GlobalKey();
+
     return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AddDetalleDialog(
+          key: dialogAgregarDetalleKey,
           nombreController: nombreController,
           nombreFocusNode: nombreFocusNode,
           preciFocusNode: precioFocusNode,
@@ -173,7 +184,7 @@ class CompraDetalleState {
       this.isDetallesSelected = false,
       this.selectedDetalles = const [],
       this.isEditing = false,
-      this.isLoading = false,
+      this.isLoading = true,
       this.compra});
 
   CompraDetalleState copyWith({

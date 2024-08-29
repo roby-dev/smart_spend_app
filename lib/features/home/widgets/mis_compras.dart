@@ -24,7 +24,6 @@ import 'package:smart_spend_app/models/compra_model.dart';
 //     );
 //   }
 // }
-
 class ComprasCard extends ConsumerWidget {
   const ComprasCard({
     super.key,
@@ -45,99 +44,81 @@ class ComprasCard extends ConsumerWidget {
       (sum, detalle) => sum + detalle.precio,
     );
 
-    // Concatena los nombres de los detalles
-    final String nombresDetalles = compra.detalles.isNotEmpty
-        ? compra.detalles.map((detalle) => detalle.nombre).join(' - ')
-        : 'Aún no se agregaron compras';
-
-    return GestureDetector(
-      onTap: () async {
-        if (isMultiSelectMode) {
-          ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
-        } else {
-          await ref.read(homeProvider.notifier).goDetalleCompra(compra: compra);
-        }
-      },
-      onLongPress: () {
-        ref.read(homeProvider.notifier).toggleComprasSelection();
-        ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
-      },
-      child: Card(
-        elevation: 0,
-        color: AppColors.white,
-        child: Container(
-          width: 270, // Ajustar ancho de las tarjetas
-          padding: const EdgeInsets.all(16.0), // Añadir padding manualmente
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8.0),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Stack(children: [
+        ListTile(
+          onTap: () async {
+            if (isMultiSelectMode) {
+              ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
+            } else {
+              await ref
+                  .read(homeProvider.notifier)
+                  .goDetalleCompra(compra: compra);
+            }
+          },
+          onLongPress: () {
+            ref.read(homeProvider.notifier).toggleComprasSelection();
+            ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
+          },
+          title: Text(
+            compra.titulo,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w400,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
-          child: Stack(
+          contentPadding: EdgeInsets.only(
+              top: 0, bottom: 16, left: isMultiSelectMode ? 40 : 16, right: 16),
+          trailing: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Título
-                  Text(
-                    compra.titulo,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Subtítulo
-                  Text(
-                    nombresDetalles,
-                    maxLines: 2, // Limitar a un máximo de dos líneas
-                    overflow: TextOverflow.ellipsis, // Agregar "..."
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w300,
-                    ),
-                  ),
-                  const Spacer(), // Empuja el total hacia abajo
-                  // Total y fecha
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total: S/ ${total.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.gray700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        Utils.FormattedDate(compraFecha: compra.fecha),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w300,
-                          color: AppColors.gray500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              if (isMultiSelectMode)
-                Positioned(
-                  top: -10,
-                  right: -10,
-                  child: RoundedCheckbox(
-                    value: isSelected,
-                    onChanged: (bool? value) {
-                      ref
-                          .read(homeProvider.notifier)
-                          .toggleCompraSelection(compra.id!);
-                    },
-                  ),
+              Text(
+                'S/ ${total.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.gray700,
                 ),
+              ),
             ],
           ),
+          tileColor: AppColors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          selected: isSelected,
+          selectedTileColor: Colors.grey.shade200,
         ),
-      ),
+        Positioned(
+          bottom: 8,
+          right: 16,
+          child: Text(
+            Utils.FormattedDate(compraFecha: compra.fecha),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w300,
+              color: AppColors.gray500,
+            ),
+          ),
+        ),
+        if (isMultiSelectMode)
+          Positioned(
+            top: 4,
+            left: 0,
+            child: RoundedCheckbox(
+              value: isSelected,
+              onChanged: (bool? value) {
+                ref
+                    .read(homeProvider.notifier)
+                    .toggleCompraSelection(compra.id!);
+              },
+            ),
+          ),
+      ]),
     );
   }
 }
