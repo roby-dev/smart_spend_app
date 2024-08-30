@@ -15,7 +15,7 @@ class AppColors {
 
   static const Color border1 = Color(0xFFD9D9D9);
 
-  static const Color primary700 = Color(0xFFE10600);
+  static const Color primary700 = Color(0xFFDA91F1);
   static const Color primary100 = Color(0xFFFDF3F2);
   static const Color primary400 = Color(0xFFF39B99);
   static const Color primary600 = Color(0xFFE73833);

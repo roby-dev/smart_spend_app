@@ -37,11 +37,48 @@ class MisComprasDetalle extends ConsumerWidget {
               ),
               itemBuilder: (context, index) {
                 final compraDetalle = compraDetalleState.detalles[index];
-                return _ComprasDetalleRow(
-                  compraDetalle: compraDetalle,
-                  index: index,
-                  isSelected:
-                      compraDetalleState.selectedDetalles.contains(index),
+                return Dismissible(
+                  key: Key(compraDetalle.id!.toString()),
+                  onDismissed: (direction) async {
+                    await ref
+                        .read(compraDetalleProvider.notifier)
+                        .deleteCurrentCompraDetalle(compraDetalle.id!);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: const Text('Compra eliminada'),
+                      action: SnackBarAction(
+                        label: 'Deshacer',
+                        onPressed: () async {
+                          await ref
+                              .read(compraDetalleProvider.notifier)
+                              .addDetalle(compraDetalle);
+                        },
+                      ),
+                    ));
+                  },
+                  background: Container(
+                    color: Colors.purple[100],
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                        ),
+                        Text(
+                          'Borrar',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  child: _ComprasDetalleRow(
+                    compraDetalle: compraDetalle,
+                    index: index,
+                    isSelected:
+                        compraDetalleState.selectedDetalles.contains(index),
+                  ),
                 );
               },
             ),
@@ -106,18 +143,6 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
       }
     } else {
       _saveDetalle();
-    }
-  }
-
-  void _toggleEditing() {
-    ref.read(compraDetalleProvider.notifier).toggleEditing();
-    if (ref.watch(compraDetalleProvider).isEditing) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _nombreFocusNode.requestFocus();
-      });
-    } else {
-      _saveDetalle();
-      FocusScope.of(context).unfocus();
     }
   }
 
@@ -215,18 +240,6 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   //onSubmitted: (_) async => await _saveDetalle(),
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  ref
-                      .read(compraDetalleProvider.notifier)
-                      .deleteCurrentCompraDetalle(widget.compraDetalle.id!);
-                },
-                icon: const Icon(
-                  Icons.close,
-                  color: AppColors.primary500, // Set the color of the icon
-                  size: 20.0, // Reduce the size of the icon
                 ),
               ),
             ],
