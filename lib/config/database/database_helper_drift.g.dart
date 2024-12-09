@@ -767,7 +767,7 @@ final class $$CompraDetallesTableReferences
 
   $$ComprasTableProcessedTableManager get compra {
     final manager = $$ComprasTableTableManager($_db, $_db.compras)
-        .filter((f) => f.id($_item.compra!));
+        .filter((f) => f.id($_item.compra));
     final item = $_typedResult.readTableOrNull(_compraTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
