@@ -9,8 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/io_client.dart';
-import 'package:smart_spend_app/config/database/database_helper.dart';
+import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
+import 'package:smart_spend_app/main.dart';
 
 final sessionProvider = StateNotifierProvider<SessionNotifier, SessionState>(
     (ref) => SessionNotifier(ref));
@@ -21,6 +22,8 @@ class SessionNotifier extends StateNotifier<SessionState> {
   SessionNotifier(this.ref) : super(SessionState());
 
   final StateNotifierProviderRef ref;
+
+  AppDatabase get _db => ref.read(databaseProvider);
 
   final GoogleSignIn googleSignIn = GoogleSignIn(
     scopes: [
@@ -63,7 +66,23 @@ class SessionNotifier extends StateNotifier<SessionState> {
 
   Future<void> exportAndUploadToDrive(BuildContext context) async {
     try {
-      // Autenticación con OAuth2
+      final db = ref.read(databaseProvider);
+
+      // Exportar los datos a JSON usando Drift
+      String jsonString = await db.exportToJson();
+
+      // Guardar el JSON en un archivo temporal
+      final directory = await getTemporaryDirectory();
+      final filePath = '${directory.path}/backup.json';
+      final file = File(filePath);
+      await file.writeAsString(jsonString);
+
+      // Usar la fecha en el nombre del archivo
+      DateTime now = DateTime.now();
+      String formattedDate = DateFormat('dd-MM-yyyy-HH-mm').format(now);
+      String fileName = "backup-$formattedDate.json";
+
+      // Autenticación con Google Drive
       final GoogleSignInAuthentication googleAuth =
           await googleSignIn.currentUser!.authentication;
 
@@ -80,25 +99,8 @@ class SessionNotifier extends StateNotifier<SessionState> {
         ),
       );
 
-      // Crear una instancia de la API de Google Drive
-      var driveApi = drive.DriveApi(authClient);
-
-      // Exportar los datos de la base de datos a un JSON usando DatabaseHelper
-      String jsonString = await DatabaseHelper().exportToJson();
-
-      // Guardar el JSON en un archivo temporal
-      final directory = await getTemporaryDirectory();
-
-      final filePath = '${directory.path}/backup.json';
-      final file = File(filePath);
-      await file.writeAsString(jsonString);
-
-      DateTime now = DateTime.now();
-      String formattedDate = DateFormat('dd-MM-yyyy-HH-mm').format(now);
-      // Usar la fecha en el nombre del archivo
-      String fileName = "backup-$formattedDate.json";
-
       // Subir el archivo a Google Drive
+      var driveApi = drive.DriveApi(authClient);
       var driveFile = drive.File();
       driveFile.name = fileName;
 
@@ -108,7 +110,6 @@ class SessionNotifier extends StateNotifier<SessionState> {
       );
 
       print('Uploaded File ID: ${response.id}');
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Backup subido a Google Drive')),
       );
@@ -122,10 +123,12 @@ class SessionNotifier extends StateNotifier<SessionState> {
 
   Future<void> importFromDrive(BuildContext context) async {
     try {
+      final db = ref.read(databaseProvider);
+
       // Seleccionar archivo usando FilePicker
       var filePickerResult = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json'], // Permitir solo archivos JSON
+        allowedExtensions: ['json'],
       );
 
       if (filePickerResult != null && filePickerResult.files.isNotEmpty) {
@@ -135,8 +138,8 @@ class SessionNotifier extends StateNotifier<SessionState> {
           // Leer el contenido del archivo JSON
           String jsonString = await File(filePath).readAsString();
 
-          // Importar los datos usando DatabaseHelper
-          await DatabaseHelper().importFromJson(jsonString);
+          // Importar los datos usando Drift
+          await db.importFromJson(jsonString);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Datos importados exitosamente')),

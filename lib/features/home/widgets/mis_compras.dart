@@ -30,7 +30,7 @@ class ComprasCard extends ConsumerWidget {
     required this.compra,
   });
 
-  final Compra compra;
+  final CompraModel compra;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -1,13 +1,15 @@
+import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:smart_spend_app/config/database/database_helper.dart';
+import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 import 'package:smart_spend_app/config/router/app_router.dart';
 import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
-import 'package:smart_spend_app/models/compra_model.dart';
-import 'package:smart_spend_app/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/main.dart';
 import 'package:smart_spend_app/features/home/widgets/dialog_agregar_editar_compra.dart';
 import 'package:smart_spend_app/features/home/widgets/dialog_confirmar_eliminar.dart';
+import 'package:smart_spend_app/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/models/compra_model.dart';
 
 final homeProvider =
     StateNotifierProvider<HomeNotifier, HomeState>((ref) => HomeNotifier(ref));
@@ -16,30 +18,69 @@ class HomeNotifier extends StateNotifier<HomeState> {
   HomeNotifier(this.ref) : super(HomeState());
 
   final StateNotifierProviderRef ref;
-  final DatabaseHelper _dbHelper = DatabaseHelper();
   final GoRouter router = appRouter;
 
+  AppDatabase get _db => ref.read(databaseProvider);
   GlobalKey? dialogAgregarCompraKey;
 
-  Future<void> saveCompra(Compra compra, List<CompraDetalle> detalles) async {
-    final compraId = await _dbHelper.insertCompra(compra);
+  Future<void> saveCompra(
+      CompraModel compra, List<CompraDetalleModel> detalles) async {
+    final compraId = await _db.into(_db.compras).insert(
+          ComprasCompanion(
+            titulo: Value(compra.titulo),
+            fecha: Value(compra.fecha.toIso8601String()),
+          ),
+        );
+
+    //final compraId = await _dbHelper.insertCompra(compra);
+
+    // for (var detalle in detalles) {
+    //   await _dbHelper.insertCompraDetalle(detalle.copyWith(compraId: compraId));
+    // }
 
     for (var detalle in detalles) {
-      await _dbHelper.insertCompraDetalle(detalle.copyWith(compraId: compraId));
+      await _db.into(_db.compraDetalles).insert(
+            CompraDetallesCompanion(
+              nombre: Value(detalle.nombre),
+              precio: Value(detalle.precio),
+              compra: Value(compraId),
+              fecha: Value(detalle.fecha.toIso8601String()),
+            ),
+          );
     }
 
     await loadCompras();
   }
 
   Future<void> loadCompras() async {
-    final compras = await _dbHelper.getCompras();
+    final compras = await _db.select(_db.compras).get();
 
-    state = state.copyWith(
-      compras: compras,
-    );
+    // Obtener detalles asociados
+    final comprasConDetalles = await Future.wait(compras.map((compra) async {
+      final detalles = await (_db.select(_db.compraDetalles)
+            ..where((tbl) => tbl.compra.equals(compra.id)))
+          .get();
+
+      return CompraModel(
+        id: compra.id,
+        titulo: compra.titulo,
+        fecha: DateTime.parse(compra.fecha),
+        detalles: detalles.map((detalle) {
+          return CompraDetalleModel(
+            id: detalle.id,
+            nombre: detalle.nombre,
+            precio: detalle.precio,
+            compraId: detalle.compra,
+            fecha: DateTime.parse(detalle.fecha),
+          );
+        }).toList(),
+      );
+    }).toList());
+
+    state = state.copyWith(compras: comprasConDetalles);
   }
 
-  void selectCompra(Compra compra) {
+  void selectCompra(CompraModel compra) {
     state = state.copyWith(
         selectedCompraId: compra.id!,
         isCompraSelected: true,
@@ -47,7 +88,12 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   Future<void> deleteCompra(int compraId) async {
-    await _dbHelper.deleteCompra(compraId);
+    await (_db.delete(_db.compras)..where((tbl) => tbl.id.equals(compraId)))
+        .go();
+    await (_db.delete(_db.compraDetalles)
+          ..where((tbl) => tbl.compra.equals(compraId)))
+        .go();
+
     await loadCompras();
   }
 
@@ -73,9 +119,8 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   Future<void> deleteSelectedCompras() async {
-    final selectedCompras = List<int>.from(state.selectedCompras);
-    for (var compraId in selectedCompras) {
-      await _dbHelper.deleteCompra(compraId);
+    for (var compraId in state.selectedCompras) {
+      await deleteCompra(compraId);
     }
     toggleComprasSelection();
     await loadCompras();
@@ -89,7 +134,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   Future<void> showAddEditCompraDialog(
-      {required BuildContext context, Compra? compra}) async {
+      {required BuildContext context, CompraModel? compra}) async {
     final TextEditingController titleController =
         TextEditingController(text: compra?.titulo ?? '');
     final FocusNode focusNode = FocusNode();
@@ -120,14 +165,14 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   void _handleSaveCompra(BuildContext context, title, HomeNotifier homeNotifier,
-      {Compra? compra}) {
+      {CompraModel? compra}) {
     if (title.isNotEmpty) {
       if (compra != null) {
         final updatedCompra = compra.copyWith(titulo: title);
         homeNotifier
             .saveCompra(updatedCompra, []); // Guarda la compra actualizada
       } else {
-        final compra = Compra(
+        final compra = CompraModel(
           titulo: title,
           fecha: DateTime.now(),
         );
@@ -169,7 +214,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> goDetalleCompra({required Compra compra}) async {
+  Future<void> goDetalleCompra({required CompraModel compra}) async {
     selectCompra(compra);
     ref.read(compraDetalleProvider.notifier).initLoading();
     router.push('/compra-detalle');
@@ -177,11 +222,11 @@ class HomeNotifier extends StateNotifier<HomeState> {
 }
 
 class HomeState {
-  final List<Compra> compras;
+  final List<CompraModel> compras;
   final int? selectedCompraId;
   final bool isComprasSelected;
   final List<int> selectedCompras;
-  Compra? selectedCompra;
+  CompraModel? selectedCompra;
 
   HomeState(
       {this.compras = const [],
@@ -191,12 +236,12 @@ class HomeState {
       this.selectedCompra});
 
   HomeState copyWith(
-      {List<Compra>? compras,
+      {List<CompraModel>? compras,
       int? selectedCompraId,
       bool? isCompraSelected,
       bool? isComprasSelected,
       List<int>? selectedCompras,
-      Compra? selectedCompra}) {
+      CompraModel? selectedCompra}) {
     return HomeState(
       compras: compras ?? this.compras,
       selectedCompraId: selectedCompraId ?? this.selectedCompraId,

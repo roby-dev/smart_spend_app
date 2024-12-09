@@ -1,12 +1,12 @@
 import 'package:smart_spend_app/models/compra_detalle_model.dart';
 
-class Compra {
+class CompraModel {
   final int? id;
   final String titulo;
   final DateTime fecha;
-  List<CompraDetalle> detalles; // Nueva propiedad
+  List<CompraDetalleModel> detalles; // Nueva propiedad
 
-  Compra({
+  CompraModel({
     this.id,
     required this.titulo,
     required this.fecha,
@@ -25,24 +25,24 @@ class Compra {
       'titulo': titulo,
       'fecha': fecha.toIso8601String(),
       'detalles': detalles
-          ?.map((detalle) => detalle.toJson())
+          .map((detalle) => detalle.toJson())
           .toList(), // Incluir detalles en el JSON
     };
   }
 
-  factory Compra.fromJson(Map<String, dynamic> json) => Compra(
+  factory CompraModel.fromJson(Map<String, dynamic> json) => CompraModel(
         id: json['id'],
         titulo: json['titulo'],
         fecha: DateTime.parse(json['fecha']),
       );
 
-  Compra copyWith({
+  CompraModel copyWith({
     int? id,
     String? titulo,
     DateTime? fecha,
-    List<CompraDetalle>? detalles, // Nuevo parámetro opcional
+    List<CompraDetalleModel>? detalles, // Nuevo parámetro opcional
   }) {
-    return Compra(
+    return CompraModel(
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
       fecha: fecha ?? this.fecha,

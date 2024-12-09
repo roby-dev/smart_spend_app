@@ -1,11 +1,11 @@
-class CompraDetalle {
+class CompraDetalleModel {
   final int? id;
   final String nombre;
   final double precio;
   final int compraId;
   final DateTime fecha;
 
-  CompraDetalle(
+  CompraDetalleModel(
       {this.id,
       required this.nombre,
       required this.precio,
@@ -20,7 +20,8 @@ class CompraDetalle {
         'fecha': fecha.toIso8601String(),
       };
 
-  factory CompraDetalle.fromJson(Map<String, dynamic> json) => CompraDetalle(
+  factory CompraDetalleModel.fromJson(Map<String, dynamic> json) =>
+      CompraDetalleModel(
         id: json['id'],
         nombre: json['nombre'],
         precio: json['precio'],
@@ -28,13 +29,13 @@ class CompraDetalle {
         fecha: DateTime.parse(json['fecha']),
       );
 
-  CompraDetalle copyWith(
+  CompraDetalleModel copyWith(
       {int? id,
       String? nombre,
       double? precio,
       int? compraId,
       DateTime? fecha}) {
-    return CompraDetalle(
+    return CompraDetalleModel(
         id: id ?? this.id,
         nombre: nombre ?? this.nombre,
         precio: precio ?? this.precio,

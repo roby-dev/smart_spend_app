@@ -87,7 +87,7 @@ class MisComprasDetalle extends ConsumerWidget {
 }
 
 class _ComprasDetalleRow extends ConsumerStatefulWidget {
-  final CompraDetalle compraDetalle;
+  final CompraDetalleModel compraDetalle;
   final int index;
   final bool isSelected;
 
@@ -157,7 +157,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
     if (newNombre.isNotEmpty &&
         (newNombre != widget.compraDetalle.nombre ||
             formattedPrecio != widget.compraDetalle.precio)) {
-      final updatedDetalle = CompraDetalle(
+      final updatedDetalle = CompraDetalleModel(
         id: widget.compraDetalle.id,
         nombre: newNombre,
         precio: formattedPrecio,
