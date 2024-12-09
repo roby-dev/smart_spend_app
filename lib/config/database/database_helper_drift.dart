@@ -47,12 +47,16 @@ class AppDatabase extends _$AppDatabase {
           .get();
 
   Future<void> deleteCompra(int id) async {
-    await (delete(compras)..where((tbl) => tbl.id.equals(id))).go();
     await (delete(compraDetalles)..where((tbl) => tbl.compra.equals(id))).go();
+    await (delete(compras)..where((tbl) => tbl.id.equals(id))).go();
   }
 
   Future<void> deleteCompraDetalle(int id) async {
     await (delete(compraDetalles)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
+  Future<void> updateCompra(ComprasCompanion compra) {
+    return update(compras).replace(compra);
   }
 }
 

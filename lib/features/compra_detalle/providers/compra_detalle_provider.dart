@@ -168,7 +168,7 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
 
     if (compra != null && newTitle.isNotEmpty && newTitle != compra.titulo) {
       final updatedCompra = compra.copyWith(titulo: newTitle);
-      ref.read(homeProvider.notifier).saveCompra(updatedCompra, []);
+      ref.read(homeProvider.notifier).updateCompra(updatedCompra);
     }
   }
 

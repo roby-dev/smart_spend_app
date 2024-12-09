@@ -12,16 +12,27 @@ import 'package:smart_spend_app/models/compra_detalle_model.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 
 final homeProvider =
-    StateNotifierProvider<HomeNotifier, HomeState>((ref) => HomeNotifier(ref));
+    NotifierProvider<HomeNotifier, HomeState>(() => HomeNotifier());
 
-class HomeNotifier extends StateNotifier<HomeState> {
-  HomeNotifier(this.ref) : super(HomeState());
+class HomeNotifier extends Notifier<HomeState> {
+  @override
+  HomeState build() {
+    return HomeState();
+  }
 
-  final StateNotifierProviderRef ref;
   final GoRouter router = appRouter;
 
   AppDatabase get _db => ref.read(databaseProvider);
   GlobalKey? dialogAgregarCompraKey;
+
+  Future<void> updateCompra(CompraModel compra) async {
+    await _db.updateCompra(ComprasCompanion(
+        id: Value(compra.id!),
+        fecha: Value(compra.fecha.toIso8601String()),
+        titulo: Value(compra.titulo)));
+
+    await loadCompras();
+  }
 
   Future<void> saveCompra(
       CompraModel compra, List<CompraDetalleModel> detalles) async {
