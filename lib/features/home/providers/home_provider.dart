@@ -64,7 +64,9 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   Future<void> loadCompras() async {
-    final compras = await _db.select(_db.compras).get();
+    final compras = await (_db.select(_db.compras)
+          ..where((tbl) => tbl.archivado.equals(false)))
+        .get();
 
     // Obtener detalles asociados
     final comprasConDetalles = await Future.wait(compras.map((compra) async {
@@ -229,6 +231,40 @@ class HomeNotifier extends Notifier<HomeState> {
     selectCompra(compra);
     ref.read(compraDetalleProvider.notifier).initLoading();
     router.push('/compra-detalle');
+  }
+
+  Future<void> archiveCompra(int compraId) async {
+    await (_db.update(_db.compras)..where((tbl) => tbl.id.equals(compraId)))
+        .write(const ComprasCompanion(archivado: Value(true)));
+
+    await loadCompras();
+  }
+
+  Future<void> archiveSelectedCompras() async {
+    for (var compraId in state.selectedCompras) {
+      await archiveCompra(compraId);
+    }
+    toggleComprasSelection();
+    await loadCompras();
+  }
+
+  Future<void> showArchiveConfirmationDialog({
+    required BuildContext context,
+  }) async {
+    dialogAgregarCompraKey = GlobalKey();
+
+    return showDialog<void>(
+      context: context,
+      builder: (_) => DeleteConfirmationDialog(
+        onPressed: () async {
+          await archiveSelectedCompras();
+          Navigator.of(context).pop();
+        },
+        title: '¿Archivar compras?',
+        message: 'Estas compras se moverán a la sección de archivadas.',
+        confirmText: 'Archivar',
+      ),
+    );
   }
 }
 

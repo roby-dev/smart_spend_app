@@ -27,8 +27,18 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
   late final GeneratedColumn<String> fecha = GeneratedColumn<String>(
       'fecha', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _archivadoMeta =
+      const VerificationMeta('archivado');
   @override
-  List<GeneratedColumn> get $columns => [id, titulo, fecha];
+  late final GeneratedColumn<bool> archivado = GeneratedColumn<bool>(
+      'archivado', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("archivado" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [id, titulo, fecha, archivado];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -54,6 +64,10 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
     } else if (isInserting) {
       context.missing(_fechaMeta);
     }
+    if (data.containsKey('archivado')) {
+      context.handle(_archivadoMeta,
+          archivado.isAcceptableOrUnknown(data['archivado']!, _archivadoMeta));
+    }
     return context;
   }
 
@@ -69,6 +83,8 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
           .read(DriftSqlType.string, data['${effectivePrefix}titulo'])!,
       fecha: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}fecha'])!,
+      archivado: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}archivado'])!,
     );
   }
 
@@ -82,13 +98,19 @@ class Compra extends DataClass implements Insertable<Compra> {
   final int id;
   final String titulo;
   final String fecha;
-  const Compra({required this.id, required this.titulo, required this.fecha});
+  final bool archivado;
+  const Compra(
+      {required this.id,
+      required this.titulo,
+      required this.fecha,
+      required this.archivado});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['titulo'] = Variable<String>(titulo);
     map['fecha'] = Variable<String>(fecha);
+    map['archivado'] = Variable<bool>(archivado);
     return map;
   }
 
@@ -97,6 +119,7 @@ class Compra extends DataClass implements Insertable<Compra> {
       id: Value(id),
       titulo: Value(titulo),
       fecha: Value(fecha),
+      archivado: Value(archivado),
     );
   }
 
@@ -107,6 +130,7 @@ class Compra extends DataClass implements Insertable<Compra> {
       id: serializer.fromJson<int>(json['id']),
       titulo: serializer.fromJson<String>(json['titulo']),
       fecha: serializer.fromJson<String>(json['fecha']),
+      archivado: serializer.fromJson<bool>(json['archivado']),
     );
   }
   @override
@@ -116,19 +140,23 @@ class Compra extends DataClass implements Insertable<Compra> {
       'id': serializer.toJson<int>(id),
       'titulo': serializer.toJson<String>(titulo),
       'fecha': serializer.toJson<String>(fecha),
+      'archivado': serializer.toJson<bool>(archivado),
     };
   }
 
-  Compra copyWith({int? id, String? titulo, String? fecha}) => Compra(
+  Compra copyWith({int? id, String? titulo, String? fecha, bool? archivado}) =>
+      Compra(
         id: id ?? this.id,
         titulo: titulo ?? this.titulo,
         fecha: fecha ?? this.fecha,
+        archivado: archivado ?? this.archivado,
       );
   Compra copyWithCompanion(ComprasCompanion data) {
     return Compra(
       id: data.id.present ? data.id.value : this.id,
       titulo: data.titulo.present ? data.titulo.value : this.titulo,
       fecha: data.fecha.present ? data.fecha.value : this.fecha,
+      archivado: data.archivado.present ? data.archivado.value : this.archivado,
     );
   }
 
@@ -137,55 +165,66 @@ class Compra extends DataClass implements Insertable<Compra> {
     return (StringBuffer('Compra(')
           ..write('id: $id, ')
           ..write('titulo: $titulo, ')
-          ..write('fecha: $fecha')
+          ..write('fecha: $fecha, ')
+          ..write('archivado: $archivado')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, titulo, fecha);
+  int get hashCode => Object.hash(id, titulo, fecha, archivado);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Compra &&
           other.id == this.id &&
           other.titulo == this.titulo &&
-          other.fecha == this.fecha);
+          other.fecha == this.fecha &&
+          other.archivado == this.archivado);
 }
 
 class ComprasCompanion extends UpdateCompanion<Compra> {
   final Value<int> id;
   final Value<String> titulo;
   final Value<String> fecha;
+  final Value<bool> archivado;
   const ComprasCompanion({
     this.id = const Value.absent(),
     this.titulo = const Value.absent(),
     this.fecha = const Value.absent(),
+    this.archivado = const Value.absent(),
   });
   ComprasCompanion.insert({
     this.id = const Value.absent(),
     required String titulo,
     required String fecha,
+    this.archivado = const Value.absent(),
   })  : titulo = Value(titulo),
         fecha = Value(fecha);
   static Insertable<Compra> custom({
     Expression<int>? id,
     Expression<String>? titulo,
     Expression<String>? fecha,
+    Expression<bool>? archivado,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (titulo != null) 'titulo': titulo,
       if (fecha != null) 'fecha': fecha,
+      if (archivado != null) 'archivado': archivado,
     });
   }
 
   ComprasCompanion copyWith(
-      {Value<int>? id, Value<String>? titulo, Value<String>? fecha}) {
+      {Value<int>? id,
+      Value<String>? titulo,
+      Value<String>? fecha,
+      Value<bool>? archivado}) {
     return ComprasCompanion(
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
       fecha: fecha ?? this.fecha,
+      archivado: archivado ?? this.archivado,
     );
   }
 
@@ -201,6 +240,9 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
     if (fecha.present) {
       map['fecha'] = Variable<String>(fecha.value);
     }
+    if (archivado.present) {
+      map['archivado'] = Variable<bool>(archivado.value);
+    }
     return map;
   }
 
@@ -209,7 +251,8 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
     return (StringBuffer('ComprasCompanion(')
           ..write('id: $id, ')
           ..write('titulo: $titulo, ')
-          ..write('fecha: $fecha')
+          ..write('fecha: $fecha, ')
+          ..write('archivado: $archivado')
           ..write(')'))
         .toString();
   }
@@ -240,6 +283,11 @@ class $CompraDetallesTable extends CompraDetalles
   late final GeneratedColumn<double> precio = GeneratedColumn<double>(
       'precio', aliasedName, false,
       type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _fechaMeta = const VerificationMeta('fecha');
+  @override
+  late final GeneratedColumn<String> fecha = GeneratedColumn<String>(
+      'fecha', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _compraMeta = const VerificationMeta('compra');
   @override
   late final GeneratedColumn<int> compra = GeneratedColumn<int>(
@@ -248,13 +296,8 @@ class $CompraDetallesTable extends CompraDetalles
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES compras (id)'));
-  static const VerificationMeta _fechaMeta = const VerificationMeta('fecha');
   @override
-  late final GeneratedColumn<String> fecha = GeneratedColumn<String>(
-      'fecha', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  @override
-  List<GeneratedColumn> get $columns => [id, nombre, precio, compra, fecha];
+  List<GeneratedColumn> get $columns => [id, nombre, precio, fecha, compra];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -280,17 +323,17 @@ class $CompraDetallesTable extends CompraDetalles
     } else if (isInserting) {
       context.missing(_precioMeta);
     }
-    if (data.containsKey('compra')) {
-      context.handle(_compraMeta,
-          compra.isAcceptableOrUnknown(data['compra']!, _compraMeta));
-    } else if (isInserting) {
-      context.missing(_compraMeta);
-    }
     if (data.containsKey('fecha')) {
       context.handle(
           _fechaMeta, fecha.isAcceptableOrUnknown(data['fecha']!, _fechaMeta));
     } else if (isInserting) {
       context.missing(_fechaMeta);
+    }
+    if (data.containsKey('compra')) {
+      context.handle(_compraMeta,
+          compra.isAcceptableOrUnknown(data['compra']!, _compraMeta));
+    } else if (isInserting) {
+      context.missing(_compraMeta);
     }
     return context;
   }
@@ -307,10 +350,10 @@ class $CompraDetallesTable extends CompraDetalles
           .read(DriftSqlType.string, data['${effectivePrefix}nombre'])!,
       precio: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}precio'])!,
-      compra: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}compra'])!,
       fecha: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}fecha'])!,
+      compra: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}compra'])!,
     );
   }
 
@@ -324,22 +367,22 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
   final int id;
   final String nombre;
   final double precio;
-  final int compra;
   final String fecha;
+  final int compra;
   const CompraDetalle(
       {required this.id,
       required this.nombre,
       required this.precio,
-      required this.compra,
-      required this.fecha});
+      required this.fecha,
+      required this.compra});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['nombre'] = Variable<String>(nombre);
     map['precio'] = Variable<double>(precio);
-    map['compra'] = Variable<int>(compra);
     map['fecha'] = Variable<String>(fecha);
+    map['compra'] = Variable<int>(compra);
     return map;
   }
 
@@ -348,8 +391,8 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
       id: Value(id),
       nombre: Value(nombre),
       precio: Value(precio),
-      compra: Value(compra),
       fecha: Value(fecha),
+      compra: Value(compra),
     );
   }
 
@@ -360,8 +403,8 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
       id: serializer.fromJson<int>(json['id']),
       nombre: serializer.fromJson<String>(json['nombre']),
       precio: serializer.fromJson<double>(json['precio']),
-      compra: serializer.fromJson<int>(json['compra']),
       fecha: serializer.fromJson<String>(json['fecha']),
+      compra: serializer.fromJson<int>(json['compra']),
     );
   }
   @override
@@ -371,8 +414,8 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
       'id': serializer.toJson<int>(id),
       'nombre': serializer.toJson<String>(nombre),
       'precio': serializer.toJson<double>(precio),
-      'compra': serializer.toJson<int>(compra),
       'fecha': serializer.toJson<String>(fecha),
+      'compra': serializer.toJson<int>(compra),
     };
   }
 
@@ -380,22 +423,22 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
           {int? id,
           String? nombre,
           double? precio,
-          int? compra,
-          String? fecha}) =>
+          String? fecha,
+          int? compra}) =>
       CompraDetalle(
         id: id ?? this.id,
         nombre: nombre ?? this.nombre,
         precio: precio ?? this.precio,
-        compra: compra ?? this.compra,
         fecha: fecha ?? this.fecha,
+        compra: compra ?? this.compra,
       );
   CompraDetalle copyWithCompanion(CompraDetallesCompanion data) {
     return CompraDetalle(
       id: data.id.present ? data.id.value : this.id,
       nombre: data.nombre.present ? data.nombre.value : this.nombre,
       precio: data.precio.present ? data.precio.value : this.precio,
-      compra: data.compra.present ? data.compra.value : this.compra,
       fecha: data.fecha.present ? data.fecha.value : this.fecha,
+      compra: data.compra.present ? data.compra.value : this.compra,
     );
   }
 
@@ -405,14 +448,14 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
           ..write('id: $id, ')
           ..write('nombre: $nombre, ')
           ..write('precio: $precio, ')
-          ..write('compra: $compra, ')
-          ..write('fecha: $fecha')
+          ..write('fecha: $fecha, ')
+          ..write('compra: $compra')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nombre, precio, compra, fecha);
+  int get hashCode => Object.hash(id, nombre, precio, fecha, compra);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -420,46 +463,46 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
           other.id == this.id &&
           other.nombre == this.nombre &&
           other.precio == this.precio &&
-          other.compra == this.compra &&
-          other.fecha == this.fecha);
+          other.fecha == this.fecha &&
+          other.compra == this.compra);
 }
 
 class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
   final Value<int> id;
   final Value<String> nombre;
   final Value<double> precio;
-  final Value<int> compra;
   final Value<String> fecha;
+  final Value<int> compra;
   const CompraDetallesCompanion({
     this.id = const Value.absent(),
     this.nombre = const Value.absent(),
     this.precio = const Value.absent(),
-    this.compra = const Value.absent(),
     this.fecha = const Value.absent(),
+    this.compra = const Value.absent(),
   });
   CompraDetallesCompanion.insert({
     this.id = const Value.absent(),
     required String nombre,
     required double precio,
-    required int compra,
     required String fecha,
+    required int compra,
   })  : nombre = Value(nombre),
         precio = Value(precio),
-        compra = Value(compra),
-        fecha = Value(fecha);
+        fecha = Value(fecha),
+        compra = Value(compra);
   static Insertable<CompraDetalle> custom({
     Expression<int>? id,
     Expression<String>? nombre,
     Expression<double>? precio,
-    Expression<int>? compra,
     Expression<String>? fecha,
+    Expression<int>? compra,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (nombre != null) 'nombre': nombre,
       if (precio != null) 'precio': precio,
-      if (compra != null) 'compra': compra,
       if (fecha != null) 'fecha': fecha,
+      if (compra != null) 'compra': compra,
     });
   }
 
@@ -467,14 +510,14 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
       {Value<int>? id,
       Value<String>? nombre,
       Value<double>? precio,
-      Value<int>? compra,
-      Value<String>? fecha}) {
+      Value<String>? fecha,
+      Value<int>? compra}) {
     return CompraDetallesCompanion(
       id: id ?? this.id,
       nombre: nombre ?? this.nombre,
       precio: precio ?? this.precio,
-      compra: compra ?? this.compra,
       fecha: fecha ?? this.fecha,
+      compra: compra ?? this.compra,
     );
   }
 
@@ -490,11 +533,11 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
     if (precio.present) {
       map['precio'] = Variable<double>(precio.value);
     }
-    if (compra.present) {
-      map['compra'] = Variable<int>(compra.value);
-    }
     if (fecha.present) {
       map['fecha'] = Variable<String>(fecha.value);
+    }
+    if (compra.present) {
+      map['compra'] = Variable<int>(compra.value);
     }
     return map;
   }
@@ -505,8 +548,8 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
           ..write('id: $id, ')
           ..write('nombre: $nombre, ')
           ..write('precio: $precio, ')
-          ..write('compra: $compra, ')
-          ..write('fecha: $fecha')
+          ..write('fecha: $fecha, ')
+          ..write('compra: $compra')
           ..write(')'))
         .toString();
   }
@@ -528,11 +571,13 @@ typedef $$ComprasTableCreateCompanionBuilder = ComprasCompanion Function({
   Value<int> id,
   required String titulo,
   required String fecha,
+  Value<bool> archivado,
 });
 typedef $$ComprasTableUpdateCompanionBuilder = ComprasCompanion Function({
   Value<int> id,
   Value<String> titulo,
   Value<String> fecha,
+  Value<bool> archivado,
 });
 
 final class $$ComprasTableReferences
@@ -540,16 +585,16 @@ final class $$ComprasTableReferences
   $$ComprasTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static MultiTypedResultKey<$CompraDetallesTable, List<CompraDetalle>>
-      _compraDetallesRefsTable(_$AppDatabase db) =>
-          MultiTypedResultKey.fromTable(db.compraDetalles,
-              aliasName: $_aliasNameGenerator(
-                  db.compras.id, db.compraDetalles.compra));
+      _comprasTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+          db.compraDetalles,
+          aliasName:
+              $_aliasNameGenerator(db.compras.id, db.compraDetalles.compra));
 
-  $$CompraDetallesTableProcessedTableManager get compraDetallesRefs {
+  $$CompraDetallesTableProcessedTableManager get compras {
     final manager = $$CompraDetallesTableTableManager($_db, $_db.compraDetalles)
         .filter((f) => f.compra.id($_item.id));
 
-    final cache = $_typedResult.readTableOrNull(_compraDetallesRefsTable($_db));
+    final cache = $_typedResult.readTableOrNull(_comprasTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -573,7 +618,10 @@ class $$ComprasTableFilterComposer
   ColumnFilters<String> get fecha => $composableBuilder(
       column: $table.fecha, builder: (column) => ColumnFilters(column));
 
-  Expression<bool> compraDetallesRefs(
+  ColumnFilters<bool> get archivado => $composableBuilder(
+      column: $table.archivado, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> compras(
       Expression<bool> Function($$CompraDetallesTableFilterComposer f) f) {
     final $$CompraDetallesTableFilterComposer composer = $composerBuilder(
         composer: this,
@@ -612,6 +660,9 @@ class $$ComprasTableOrderingComposer
 
   ColumnOrderings<String> get fecha => $composableBuilder(
       column: $table.fecha, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get archivado => $composableBuilder(
+      column: $table.archivado, builder: (column) => ColumnOrderings(column));
 }
 
 class $$ComprasTableAnnotationComposer
@@ -632,7 +683,10 @@ class $$ComprasTableAnnotationComposer
   GeneratedColumn<String> get fecha =>
       $composableBuilder(column: $table.fecha, builder: (column) => column);
 
-  Expression<T> compraDetallesRefs<T extends Object>(
+  GeneratedColumn<bool> get archivado =>
+      $composableBuilder(column: $table.archivado, builder: (column) => column);
+
+  Expression<T> compras<T extends Object>(
       Expression<T> Function($$CompraDetallesTableAnnotationComposer a) f) {
     final $$CompraDetallesTableAnnotationComposer composer = $composerBuilder(
         composer: this,
@@ -665,7 +719,7 @@ class $$ComprasTableTableManager extends RootTableManager<
     $$ComprasTableUpdateCompanionBuilder,
     (Compra, $$ComprasTableReferences),
     Compra,
-    PrefetchHooks Function({bool compraDetallesRefs})> {
+    PrefetchHooks Function({bool compras})> {
   $$ComprasTableTableManager(_$AppDatabase db, $ComprasTable table)
       : super(TableManagerState(
           db: db,
@@ -680,43 +734,44 @@ class $$ComprasTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> titulo = const Value.absent(),
             Value<String> fecha = const Value.absent(),
+            Value<bool> archivado = const Value.absent(),
           }) =>
               ComprasCompanion(
             id: id,
             titulo: titulo,
             fecha: fecha,
+            archivado: archivado,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String titulo,
             required String fecha,
+            Value<bool> archivado = const Value.absent(),
           }) =>
               ComprasCompanion.insert(
             id: id,
             titulo: titulo,
             fecha: fecha,
+            archivado: archivado,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
                   (e.readTable(table), $$ComprasTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({compraDetallesRefs = false}) {
+          prefetchHooksCallback: ({compras = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [
-                if (compraDetallesRefs) db.compraDetalles
-              ],
+              explicitlyWatchedTables: [if (compras) db.compraDetalles],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
-                  if (compraDetallesRefs)
+                  if (compras)
                     await $_getPrefetchedData(
                         currentTable: table,
-                        referencedTable: $$ComprasTableReferences
-                            ._compraDetallesRefsTable(db),
+                        referencedTable:
+                            $$ComprasTableReferences._comprasTable(db),
                         managerFromTypedResult: (p0) =>
-                            $$ComprasTableReferences(db, table, p0)
-                                .compraDetallesRefs,
+                            $$ComprasTableReferences(db, table, p0).compras,
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.compra == item.id),
@@ -739,22 +794,22 @@ typedef $$ComprasTableProcessedTableManager = ProcessedTableManager<
     $$ComprasTableUpdateCompanionBuilder,
     (Compra, $$ComprasTableReferences),
     Compra,
-    PrefetchHooks Function({bool compraDetallesRefs})>;
+    PrefetchHooks Function({bool compras})>;
 typedef $$CompraDetallesTableCreateCompanionBuilder = CompraDetallesCompanion
     Function({
   Value<int> id,
   required String nombre,
   required double precio,
-  required int compra,
   required String fecha,
+  required int compra,
 });
 typedef $$CompraDetallesTableUpdateCompanionBuilder = CompraDetallesCompanion
     Function({
   Value<int> id,
   Value<String> nombre,
   Value<double> precio,
-  Value<int> compra,
   Value<String> fecha,
+  Value<int> compra,
 });
 
 final class $$CompraDetallesTableReferences
@@ -767,7 +822,7 @@ final class $$CompraDetallesTableReferences
 
   $$ComprasTableProcessedTableManager get compra {
     final manager = $$ComprasTableTableManager($_db, $_db.compras)
-        .filter((f) => f.id($_item.compra));
+        .filter((f) => f.id($_item.compra!));
     final item = $_typedResult.readTableOrNull(_compraTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -928,29 +983,29 @@ class $$CompraDetallesTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> nombre = const Value.absent(),
             Value<double> precio = const Value.absent(),
-            Value<int> compra = const Value.absent(),
             Value<String> fecha = const Value.absent(),
+            Value<int> compra = const Value.absent(),
           }) =>
               CompraDetallesCompanion(
             id: id,
             nombre: nombre,
             precio: precio,
-            compra: compra,
             fecha: fecha,
+            compra: compra,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String nombre,
             required double precio,
-            required int compra,
             required String fecha,
+            required int compra,
           }) =>
               CompraDetallesCompanion.insert(
             id: id,
             nombre: nombre,
             precio: precio,
-            compra: compra,
             fecha: fecha,
+            compra: compra,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

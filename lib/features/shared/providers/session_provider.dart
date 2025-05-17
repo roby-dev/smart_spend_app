@@ -13,17 +13,16 @@ import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/main.dart';
 
-final sessionProvider = StateNotifierProvider<SessionNotifier, SessionState>(
-    (ref) => SessionNotifier(ref));
+final sessionProvider =
+    NotifierProvider<SessionNotifier, SessionState>(() => SessionNotifier());
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
-class SessionNotifier extends StateNotifier<SessionState> {
-  SessionNotifier(this.ref) : super(SessionState());
-
-  final StateNotifierProviderRef ref;
-
-  AppDatabase get _db => ref.read(databaseProvider);
+class SessionNotifier extends Notifier<SessionState> {
+  @override
+  SessionState build() {
+    return SessionState();
+  }
 
   final GoogleSignIn googleSignIn = GoogleSignIn(
     scopes: [

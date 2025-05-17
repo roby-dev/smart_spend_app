@@ -12,6 +12,7 @@ class Compras extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get titulo => text()();
   TextColumn get fecha => text()();
+  BoolColumn get archivado => boolean().withDefault(const Constant(false))();
 }
 
 @DataClassName('CompraDetalle')

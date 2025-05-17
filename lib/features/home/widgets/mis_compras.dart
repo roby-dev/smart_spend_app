@@ -37,8 +37,8 @@ class ComprasCard extends ConsumerWidget {
     final homeState = ref.watch(homeProvider);
     final isSelected = homeState.selectedCompras.contains(compra.id);
     final bool isMultiSelectMode = homeState.isComprasSelected;
+    final isArchivada = compra.archivado;
 
-    // Calcula el total de los precios de los detalles
     final double total = compra.detalles.fold(
       0.0,
       (sum, detalle) => sum + detalle.precio,
@@ -52,9 +52,11 @@ class ComprasCard extends ConsumerWidget {
             if (isMultiSelectMode) {
               ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
             } else {
-              await ref
-                  .read(homeProvider.notifier)
-                  .goDetalleCompra(compra: compra);
+              if (!isArchivada) {
+                await ref
+                    .read(homeProvider.notifier)
+                    .goDetalleCompra(compra: compra);
+              }
             }
           },
           onLongPress: () {

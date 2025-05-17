@@ -4,19 +4,22 @@ class CompraModel {
   final int? id;
   final String titulo;
   final DateTime fecha;
-  List<CompraDetalleModel> detalles; // Nueva propiedad
+  List<CompraDetalleModel> detalles;
+  final bool archivado;
 
   CompraModel({
     this.id,
     required this.titulo,
     required this.fecha,
-    this.detalles = const [], // Inicializa como una lista vacía
+    this.detalles = const [],
+    this.archivado = false,
   });
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'titulo': titulo,
         'fecha': fecha.toIso8601String(),
+        'archivado': archivado
       };
 
   Map<String, dynamic> toJsonExport() {
@@ -24,9 +27,8 @@ class CompraModel {
       'id': id,
       'titulo': titulo,
       'fecha': fecha.toIso8601String(),
-      'detalles': detalles
-          .map((detalle) => detalle.toJson())
-          .toList(), // Incluir detalles en el JSON
+      'archivado': archivado,
+      'detalles': detalles.map((detalle) => detalle.toJson()).toList(),
     };
   }
 
@@ -34,19 +36,22 @@ class CompraModel {
         id: json['id'],
         titulo: json['titulo'],
         fecha: DateTime.parse(json['fecha']),
+        archivado: json['archivado'] ?? false,
       );
 
   CompraModel copyWith({
     int? id,
     String? titulo,
     DateTime? fecha,
-    List<CompraDetalleModel>? detalles, // Nuevo parámetro opcional
+    List<CompraDetalleModel>? detalles,
+    bool? archivado,
   }) {
     return CompraModel(
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
       fecha: fecha ?? this.fecha,
-      detalles: detalles ?? this.detalles, // Usar el nuevo parámetro
+      detalles: detalles ?? this.detalles,
+      archivado: archivado ?? this.archivado,
     );
   }
 }
