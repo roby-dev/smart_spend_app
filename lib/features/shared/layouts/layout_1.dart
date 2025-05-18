@@ -51,7 +51,7 @@ class Layout1State extends ConsumerState<Layout1> {
           ref.read(homeProvider.notifier).toggleComprasSelection();
         },
         exportToJson: () async {
-          await ref.read(sessionProvider.notifier).signInAndExport(context);
+          await ref.read(homeProvider.notifier).shareJson(context);
         },
         importFromJson: () async {
           await ref.read(sessionProvider.notifier).importFromDrive(context);

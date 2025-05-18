@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 import 'package:smart_spend_app/config/router/app_router.dart';
 import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
+import 'package:smart_spend_app/features/shared/utils/utils.dart';
 import 'package:smart_spend_app/main.dart';
 import 'package:smart_spend_app/features/home/widgets/dialog_agregar_editar_compra.dart';
 import 'package:smart_spend_app/features/home/widgets/dialog_confirmar_eliminar.dart';
@@ -74,6 +75,9 @@ class HomeNotifier extends Notifier<HomeState> {
         id: compra.id,
         titulo: compra.titulo,
         fecha: DateTime.parse(compra.fecha),
+        presupuesto: compra.presupuesto,
+        archivado: compra.archivado,
+        orden: compra.orden,
         detalles: detalles.map((detalle) {
           return CompraDetalleModel(
             id: detalle.id,
@@ -296,6 +300,19 @@ class HomeNotifier extends Notifier<HomeState> {
     if (state.compras.isEmpty) return;
 
     state = state.copyWith(isReordering: !state.isReordering);
+  }
+
+  shareJson(BuildContext context) async {
+    final db = ref.read(databaseProvider);
+
+    try {
+      await Utils.exportAndShareJson(db);
+    } catch (e) {
+      print("Error al compartir JSON: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al compartir el archivo')),
+      );
+    }
   }
 }
 

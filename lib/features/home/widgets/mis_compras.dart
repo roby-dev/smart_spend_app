@@ -4,12 +4,7 @@ import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_spend_app/constants/app_colors.dart';
-import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/features/shared/widgets/checkbox_rounded.dart';
-import 'package:smart_spend_app/models/compra_model.dart';
 
 class ComprasCard extends ConsumerWidget {
   final CompraModel compra;
@@ -76,6 +71,25 @@ class ComprasCard extends ConsumerWidget {
                   color: AppColors.gray700,
                 ),
               ),
+              if (compra.presupuesto != null) ...[
+                const SizedBox(height: 6),
+                Builder(builder: (_) {
+                  final presupuesto = compra.presupuesto!;
+                  final diferencia = total - presupuesto;
+                  final bool hayExcedente = diferencia > 0;
+
+                  return Text(
+                    hayExcedente
+                        ? 'Excedente: S/ ${diferencia.toStringAsFixed(2)}'
+                        : 'Presupuesto: S/ ${presupuesto.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w300,
+                      color: hayExcedente ? Colors.red : AppColors.gray500,
+                    ),
+                  );
+                }),
+              ],
             ],
           ),
           tileColor: AppColors.white,
@@ -133,7 +147,7 @@ class _ShakeAnimationState extends State<_ShakeAnimation>
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
 
-    _animation = Tween<double>(begin: -1.5, end: 1.5).animate(
+    _animation = Tween<double>(begin: -1.8, end: 1.8).animate(
       CurvedAnimation(parent: _controller, curve: Curves.linear),
     );
   }

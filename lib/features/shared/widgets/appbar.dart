@@ -93,11 +93,11 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
             itemBuilder: (context) => [
               const PopupMenuItem<int>(
                 value: 0,
-                child: Text('Exportar a JSON'),
+                child: Text('Compartir compras'),
               ),
               const PopupMenuItem<int>(
                 value: 1,
-                child: Text('Importar desde JSON'),
+                child: Text('Importar compras'),
               ),
               if (user != null)
                 const PopupMenuItem<int>(

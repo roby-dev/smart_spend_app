@@ -58,22 +58,27 @@ class HomeScreenState extends ConsumerState<HomeScreen> {
                               key: ValueKey(compra.id),
                               child: ComprasCard(
                                 compra: compra,
-                                disableLongPress: true, // 🔧 DESACTIVADO
-                                enableShake: true, // 🔧 TEMBLOR
+                                disableLongPress: true,
+                                enableShake: true,
                               ),
                             );
                           },
                         )
-                      : ListView.builder(
-                          itemCount: homeState.compras.length,
-                          itemBuilder: (context, index) {
-                            final compra = homeState.compras[index];
-                            return ComprasCard(
-                              compra: compra,
-                              disableLongPress: false,
-                              enableShake: false,
-                            );
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            await ref.read(homeProvider.notifier).loadCompras();
                           },
+                          child: ListView.builder(
+                            itemCount: homeState.compras.length,
+                            itemBuilder: (context, index) {
+                              final compra = homeState.compras[index];
+                              return ComprasCard(
+                                compra: compra,
+                                disableLongPress: false,
+                                enableShake: false,
+                              );
+                            },
+                          ),
                         ),
             ),
           ],

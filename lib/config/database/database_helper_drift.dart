@@ -75,39 +75,50 @@ LazyDatabase _openConnection() {
 extension DriftExportImport on AppDatabase {
   Future<String> exportToJson() async {
     final comprasList = await select(compras).get();
-    final List<Map<String, dynamic>> comprasWithDetails = [];
+    final List<Map<String, dynamic>> exportData = [];
 
     for (var compra in comprasList) {
       final detalles = await (select(compraDetalles)
             ..where((tbl) => tbl.compra.equals(compra.id)))
           .get();
 
-      comprasWithDetails.add({
-        'compra': compra.toJson(),
-        'detalles': detalles.map((d) => d.toJson()).toList(),
+      exportData.add({
+        'titulo': compra.titulo,
+        'fecha': compra.fecha,
+        'archivado': compra.archivado,
+        'presupuesto': compra.presupuesto,
+        'orden': compra.orden,
+        'detalles': detalles
+            .map((d) => {
+                  'nombre': d.nombre,
+                  'precio': d.precio,
+                  'fecha': d.fecha,
+                })
+            .toList(),
       });
     }
 
-    return jsonEncode(comprasWithDetails);
+    return jsonEncode(exportData);
   }
 
   Future<void> importFromJson(String jsonString) async {
     final List<dynamic> decoded = jsonDecode(jsonString);
 
-    for (var compraMap in decoded) {
-      final compraData = compraMap['compra'] as Map<String, dynamic>;
+    for (int i = 0; i < decoded.length; i++) {
+      final compraMap = decoded[i];
       final compraId = await into(compras).insert(ComprasCompanion(
-        titulo: Value(compraData['titulo']),
-        fecha: Value(compraData['fecha']),
-        archivado: Value(compraData['archivado'] ?? false),
-        presupuesto: Value((compraData['presupuesto'] as num?)?.toDouble()),
+        titulo: Value(compraMap['titulo']),
+        fecha: Value(compraMap['fecha']),
+        archivado: Value(compraMap['archivado'] ?? false), // por defecto
+        presupuesto: Value(compraMap['presupuesto']), // no existía
+        orden: Value(i), // basado en posición
       ));
 
       final detalles = compraMap['detalles'] as List<dynamic>;
       for (var detalleMap in detalles) {
         await into(compraDetalles).insert(CompraDetallesCompanion(
           nombre: Value(detalleMap['nombre']),
-          precio: Value(detalleMap['precio']),
+          precio: Value((detalleMap['precio'] as num).toDouble()),
           compra: Value(compraId),
           fecha: Value(detalleMap['fecha']),
         ));
