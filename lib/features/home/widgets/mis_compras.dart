@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
+import 'package:smart_spend_app/features/shared/utils/utils.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 
 import 'package:smart_spend_app/features/shared/widgets/checkbox_rounded.dart';
@@ -72,7 +73,6 @@ class ComprasCard extends ConsumerWidget {
                 ),
               ),
               if (compra.presupuesto != null) ...[
-                const SizedBox(height: 6),
                 Builder(builder: (_) {
                   final presupuesto = compra.presupuesto!;
                   final diferencia = total - presupuesto;
@@ -114,6 +114,18 @@ class ComprasCard extends ConsumerWidget {
               },
             ),
           ),
+        Positioned(
+          bottom: 8,
+          right: 16,
+          child: Text(
+            Utils.FormattedDate(compraFecha: compra.fecha),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w300,
+              color: AppColors.gray300,
+            ),
+          ),
+        ),
       ],
     );
 
