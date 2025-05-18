@@ -32,19 +32,26 @@ class _ComprasArchivadasScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Archivadas',
+              ' Listas Archivadas',
               style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w200),
             ),
             const SizedBox(height: 16),
             Expanded(
               child: state.compras.isEmpty
-                  ? const Center(child: Text("No hay compras archivadas."))
-                  : ListView.builder(
-                      itemCount: state.compras.length,
-                      itemBuilder: (context, index) {
-                        final compra = state.compras[index];
-                        return ComprasCard(compra: compra);
+                  ? const Center(child: Text("No hay listas archivadas."))
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        await ref
+                            .read(archivadasProvider.notifier)
+                            .loadArchivadas();
                       },
+                      child: ListView.builder(
+                        itemCount: state.compras.length,
+                        itemBuilder: (context, index) {
+                          final compra = state.compras[index];
+                          return ComprasCard(compra: compra);
+                        },
+                      ),
                     ),
             ),
           ],

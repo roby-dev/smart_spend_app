@@ -209,6 +209,25 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   void toggleEditing() {
     state = state.copyWith(isEditing: !state.isEditing);
   }
+
+  Future<void> savePresupuesto(double? nuevoPresupuesto) async {
+    final compraActual = state.compra;
+    if (compraActual == null || compraActual.id == null) return;
+
+    final db = ref.read(databaseProvider);
+
+    await (db.update(db.compras)
+          ..where((tbl) => tbl.id.equals(compraActual.id!)))
+        .write(
+      ComprasCompanion(
+        presupuesto: Value(nuevoPresupuesto),
+      ),
+    );
+
+    state = state.copyWith(
+      compra: compraActual.copyWith(presupuesto: nuevoPresupuesto),
+    );
+  }
 }
 
 class CompraDetalleState {

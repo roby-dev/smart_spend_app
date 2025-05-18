@@ -59,6 +59,9 @@ class Layout1State extends ConsumerState<Layout1> {
         signOut: () async {
           await ref.read(sessionProvider.notifier).signOut();
         },
+        onReordering: () async {
+          ref.read(homeProvider.notifier).toggleReordering();
+        },
         user: ref.watch(sessionProvider).user,
       ),
       //drawer: const MyDrawer(),

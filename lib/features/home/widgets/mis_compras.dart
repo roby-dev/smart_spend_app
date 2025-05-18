@@ -2,78 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
-import 'package:smart_spend_app/features/shared/utils/utils.dart';
+import 'package:smart_spend_app/models/compra_model.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_spend_app/constants/app_colors.dart';
+import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/features/shared/widgets/checkbox_rounded.dart';
 import 'package:smart_spend_app/models/compra_model.dart';
 
-// class MisCompras extends ConsumerWidget {
-//   final Compra compra;
-
-//   const MisCompras({super.key, required this.compra});
-
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     final homeState = ref.watch(homeProvider);
-
-//     return ListView.builder(
-//       itemCount: homeState.compras.length,
-//       itemBuilder: (context, index) {
-//         final compra = homeState.compras[index];
-//         return _ComprasCard(compra: compra);
-//       },
-//     );
-//   }
-// }
 class ComprasCard extends ConsumerWidget {
+  final CompraModel compra;
+  final bool disableLongPress;
+  final bool enableShake;
+
   const ComprasCard({
     super.key,
     required this.compra,
+    this.disableLongPress = false,
+    this.enableShake = false,
   });
-
-  final CompraModel compra;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeProvider);
     final isSelected = homeState.selectedCompras.contains(compra.id);
-    final bool isMultiSelectMode = homeState.isComprasSelected;
+    final isMultiSelectMode = homeState.isComprasSelected;
     final isArchivada = compra.archivado;
 
-    final double total = compra.detalles.fold(
-      0.0,
-      (sum, detalle) => sum + detalle.precio,
-    );
+    final total = compra.detalles.fold(0.0, (sum, d) => sum + d.precio);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Stack(children: [
+    final tile = Stack(
+      children: [
         ListTile(
           onTap: () async {
             if (isMultiSelectMode) {
               ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
-            } else {
-              if (!isArchivada) {
-                await ref
-                    .read(homeProvider.notifier)
-                    .goDetalleCompra(compra: compra);
-              }
+            } else if (!isArchivada) {
+              await ref
+                  .read(homeProvider.notifier)
+                  .goDetalleCompra(compra: compra);
             }
           },
-          onLongPress: () {
-            ref.read(homeProvider.notifier).toggleComprasSelection();
-            ref.read(homeProvider.notifier).toggleCompraSelection(compra.id!);
-          },
+          onLongPress: disableLongPress
+              ? null
+              : () {
+                  ref.read(homeProvider.notifier).toggleComprasSelection();
+                  ref
+                      .read(homeProvider.notifier)
+                      .toggleCompraSelection(compra.id!);
+                },
           title: Text(
             compra.titulo,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
           contentPadding: EdgeInsets.only(
-              top: 0, bottom: 16, left: isMultiSelectMode ? 40 : 16, right: 16),
+            top: 0,
+            bottom: 16,
+            left: isMultiSelectMode ? 40 : 16,
+            right: 16,
+          ),
           trailing: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -95,32 +85,76 @@ class ComprasCard extends ConsumerWidget {
           selected: isSelected,
           selectedTileColor: Colors.grey.shade200,
         ),
-        Positioned(
-          bottom: 8,
-          right: 16,
-          child: Text(
-            Utils.FormattedDate(compraFecha: compra.fecha),
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w300,
-              color: AppColors.gray500,
-            ),
-          ),
-        ),
-        if (isMultiSelectMode)
+
+        // ⬇️ Mostrar checkbox solo si está en modo selección y no en modo reordenar
+        if (isMultiSelectMode && !disableLongPress)
           Positioned(
             top: 4,
             left: 0,
             child: RoundedCheckbox(
               value: isSelected,
-              onChanged: (bool? value) {
+              onChanged: (value) {
                 ref
                     .read(homeProvider.notifier)
                     .toggleCompraSelection(compra.id!);
               },
             ),
           ),
-      ]),
+      ],
+    );
+
+    final content = enableShake ? _ShakeAnimation(child: tile) : tile;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: content,
+    );
+  }
+}
+
+class _ShakeAnimation extends StatefulWidget {
+  final Widget child;
+  const _ShakeAnimation({required this.child});
+
+  @override
+  State<_ShakeAnimation> createState() => _ShakeAnimationState();
+}
+
+class _ShakeAnimationState extends State<_ShakeAnimation>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: -1.5, end: 1.5).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.linear),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(_animation.value, 0),
+          child: child,
+        );
+      },
+      child: widget.child,
     );
   }
 }

@@ -13,6 +13,8 @@ class Compras extends Table {
   TextColumn get titulo => text()();
   TextColumn get fecha => text()();
   BoolColumn get archivado => boolean().withDefault(const Constant(false))();
+  RealColumn get presupuesto => real().nullable()();
+  IntColumn get orden => integer().withDefault(const Constant(0))();
 }
 
 @DataClassName('CompraDetalle')
@@ -97,6 +99,8 @@ extension DriftExportImport on AppDatabase {
       final compraId = await into(compras).insert(ComprasCompanion(
         titulo: Value(compraData['titulo']),
         fecha: Value(compraData['fecha']),
+        archivado: Value(compraData['archivado'] ?? false),
+        presupuesto: Value((compraData['presupuesto'] as num?)?.toDouble()),
       ));
 
       final detalles = compraMap['detalles'] as List<dynamic>;

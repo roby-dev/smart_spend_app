@@ -37,8 +37,22 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("archivado" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _presupuestoMeta =
+      const VerificationMeta('presupuesto');
   @override
-  List<GeneratedColumn> get $columns => [id, titulo, fecha, archivado];
+  late final GeneratedColumn<double> presupuesto = GeneratedColumn<double>(
+      'presupuesto', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _ordenMeta = const VerificationMeta('orden');
+  @override
+  late final GeneratedColumn<int> orden = GeneratedColumn<int>(
+      'orden', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, titulo, fecha, archivado, presupuesto, orden];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -68,6 +82,16 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
       context.handle(_archivadoMeta,
           archivado.isAcceptableOrUnknown(data['archivado']!, _archivadoMeta));
     }
+    if (data.containsKey('presupuesto')) {
+      context.handle(
+          _presupuestoMeta,
+          presupuesto.isAcceptableOrUnknown(
+              data['presupuesto']!, _presupuestoMeta));
+    }
+    if (data.containsKey('orden')) {
+      context.handle(
+          _ordenMeta, orden.isAcceptableOrUnknown(data['orden']!, _ordenMeta));
+    }
     return context;
   }
 
@@ -85,6 +109,10 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
           .read(DriftSqlType.string, data['${effectivePrefix}fecha'])!,
       archivado: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}archivado'])!,
+      presupuesto: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}presupuesto']),
+      orden: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}orden'])!,
     );
   }
 
@@ -99,11 +127,15 @@ class Compra extends DataClass implements Insertable<Compra> {
   final String titulo;
   final String fecha;
   final bool archivado;
+  final double? presupuesto;
+  final int orden;
   const Compra(
       {required this.id,
       required this.titulo,
       required this.fecha,
-      required this.archivado});
+      required this.archivado,
+      this.presupuesto,
+      required this.orden});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -111,6 +143,10 @@ class Compra extends DataClass implements Insertable<Compra> {
     map['titulo'] = Variable<String>(titulo);
     map['fecha'] = Variable<String>(fecha);
     map['archivado'] = Variable<bool>(archivado);
+    if (!nullToAbsent || presupuesto != null) {
+      map['presupuesto'] = Variable<double>(presupuesto);
+    }
+    map['orden'] = Variable<int>(orden);
     return map;
   }
 
@@ -120,6 +156,10 @@ class Compra extends DataClass implements Insertable<Compra> {
       titulo: Value(titulo),
       fecha: Value(fecha),
       archivado: Value(archivado),
+      presupuesto: presupuesto == null && nullToAbsent
+          ? const Value.absent()
+          : Value(presupuesto),
+      orden: Value(orden),
     );
   }
 
@@ -131,6 +171,8 @@ class Compra extends DataClass implements Insertable<Compra> {
       titulo: serializer.fromJson<String>(json['titulo']),
       fecha: serializer.fromJson<String>(json['fecha']),
       archivado: serializer.fromJson<bool>(json['archivado']),
+      presupuesto: serializer.fromJson<double?>(json['presupuesto']),
+      orden: serializer.fromJson<int>(json['orden']),
     );
   }
   @override
@@ -141,15 +183,25 @@ class Compra extends DataClass implements Insertable<Compra> {
       'titulo': serializer.toJson<String>(titulo),
       'fecha': serializer.toJson<String>(fecha),
       'archivado': serializer.toJson<bool>(archivado),
+      'presupuesto': serializer.toJson<double?>(presupuesto),
+      'orden': serializer.toJson<int>(orden),
     };
   }
 
-  Compra copyWith({int? id, String? titulo, String? fecha, bool? archivado}) =>
+  Compra copyWith(
+          {int? id,
+          String? titulo,
+          String? fecha,
+          bool? archivado,
+          Value<double?> presupuesto = const Value.absent(),
+          int? orden}) =>
       Compra(
         id: id ?? this.id,
         titulo: titulo ?? this.titulo,
         fecha: fecha ?? this.fecha,
         archivado: archivado ?? this.archivado,
+        presupuesto: presupuesto.present ? presupuesto.value : this.presupuesto,
+        orden: orden ?? this.orden,
       );
   Compra copyWithCompanion(ComprasCompanion data) {
     return Compra(
@@ -157,6 +209,9 @@ class Compra extends DataClass implements Insertable<Compra> {
       titulo: data.titulo.present ? data.titulo.value : this.titulo,
       fecha: data.fecha.present ? data.fecha.value : this.fecha,
       archivado: data.archivado.present ? data.archivado.value : this.archivado,
+      presupuesto:
+          data.presupuesto.present ? data.presupuesto.value : this.presupuesto,
+      orden: data.orden.present ? data.orden.value : this.orden,
     );
   }
 
@@ -166,13 +221,16 @@ class Compra extends DataClass implements Insertable<Compra> {
           ..write('id: $id, ')
           ..write('titulo: $titulo, ')
           ..write('fecha: $fecha, ')
-          ..write('archivado: $archivado')
+          ..write('archivado: $archivado, ')
+          ..write('presupuesto: $presupuesto, ')
+          ..write('orden: $orden')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, titulo, fecha, archivado);
+  int get hashCode =>
+      Object.hash(id, titulo, fecha, archivado, presupuesto, orden);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -180,7 +238,9 @@ class Compra extends DataClass implements Insertable<Compra> {
           other.id == this.id &&
           other.titulo == this.titulo &&
           other.fecha == this.fecha &&
-          other.archivado == this.archivado);
+          other.archivado == this.archivado &&
+          other.presupuesto == this.presupuesto &&
+          other.orden == this.orden);
 }
 
 class ComprasCompanion extends UpdateCompanion<Compra> {
@@ -188,17 +248,23 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
   final Value<String> titulo;
   final Value<String> fecha;
   final Value<bool> archivado;
+  final Value<double?> presupuesto;
+  final Value<int> orden;
   const ComprasCompanion({
     this.id = const Value.absent(),
     this.titulo = const Value.absent(),
     this.fecha = const Value.absent(),
     this.archivado = const Value.absent(),
+    this.presupuesto = const Value.absent(),
+    this.orden = const Value.absent(),
   });
   ComprasCompanion.insert({
     this.id = const Value.absent(),
     required String titulo,
     required String fecha,
     this.archivado = const Value.absent(),
+    this.presupuesto = const Value.absent(),
+    this.orden = const Value.absent(),
   })  : titulo = Value(titulo),
         fecha = Value(fecha);
   static Insertable<Compra> custom({
@@ -206,12 +272,16 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
     Expression<String>? titulo,
     Expression<String>? fecha,
     Expression<bool>? archivado,
+    Expression<double>? presupuesto,
+    Expression<int>? orden,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (titulo != null) 'titulo': titulo,
       if (fecha != null) 'fecha': fecha,
       if (archivado != null) 'archivado': archivado,
+      if (presupuesto != null) 'presupuesto': presupuesto,
+      if (orden != null) 'orden': orden,
     });
   }
 
@@ -219,12 +289,16 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
       {Value<int>? id,
       Value<String>? titulo,
       Value<String>? fecha,
-      Value<bool>? archivado}) {
+      Value<bool>? archivado,
+      Value<double?>? presupuesto,
+      Value<int>? orden}) {
     return ComprasCompanion(
       id: id ?? this.id,
       titulo: titulo ?? this.titulo,
       fecha: fecha ?? this.fecha,
       archivado: archivado ?? this.archivado,
+      presupuesto: presupuesto ?? this.presupuesto,
+      orden: orden ?? this.orden,
     );
   }
 
@@ -243,6 +317,12 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
     if (archivado.present) {
       map['archivado'] = Variable<bool>(archivado.value);
     }
+    if (presupuesto.present) {
+      map['presupuesto'] = Variable<double>(presupuesto.value);
+    }
+    if (orden.present) {
+      map['orden'] = Variable<int>(orden.value);
+    }
     return map;
   }
 
@@ -252,7 +332,9 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
           ..write('id: $id, ')
           ..write('titulo: $titulo, ')
           ..write('fecha: $fecha, ')
-          ..write('archivado: $archivado')
+          ..write('archivado: $archivado, ')
+          ..write('presupuesto: $presupuesto, ')
+          ..write('orden: $orden')
           ..write(')'))
         .toString();
   }
@@ -572,12 +654,16 @@ typedef $$ComprasTableCreateCompanionBuilder = ComprasCompanion Function({
   required String titulo,
   required String fecha,
   Value<bool> archivado,
+  Value<double?> presupuesto,
+  Value<int> orden,
 });
 typedef $$ComprasTableUpdateCompanionBuilder = ComprasCompanion Function({
   Value<int> id,
   Value<String> titulo,
   Value<String> fecha,
   Value<bool> archivado,
+  Value<double?> presupuesto,
+  Value<int> orden,
 });
 
 final class $$ComprasTableReferences
@@ -621,6 +707,12 @@ class $$ComprasTableFilterComposer
   ColumnFilters<bool> get archivado => $composableBuilder(
       column: $table.archivado, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<double> get presupuesto => $composableBuilder(
+      column: $table.presupuesto, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get orden => $composableBuilder(
+      column: $table.orden, builder: (column) => ColumnFilters(column));
+
   Expression<bool> compras(
       Expression<bool> Function($$CompraDetallesTableFilterComposer f) f) {
     final $$CompraDetallesTableFilterComposer composer = $composerBuilder(
@@ -663,6 +755,12 @@ class $$ComprasTableOrderingComposer
 
   ColumnOrderings<bool> get archivado => $composableBuilder(
       column: $table.archivado, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get presupuesto => $composableBuilder(
+      column: $table.presupuesto, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get orden => $composableBuilder(
+      column: $table.orden, builder: (column) => ColumnOrderings(column));
 }
 
 class $$ComprasTableAnnotationComposer
@@ -685,6 +783,12 @@ class $$ComprasTableAnnotationComposer
 
   GeneratedColumn<bool> get archivado =>
       $composableBuilder(column: $table.archivado, builder: (column) => column);
+
+  GeneratedColumn<double> get presupuesto => $composableBuilder(
+      column: $table.presupuesto, builder: (column) => column);
+
+  GeneratedColumn<int> get orden =>
+      $composableBuilder(column: $table.orden, builder: (column) => column);
 
   Expression<T> compras<T extends Object>(
       Expression<T> Function($$CompraDetallesTableAnnotationComposer a) f) {
@@ -735,24 +839,32 @@ class $$ComprasTableTableManager extends RootTableManager<
             Value<String> titulo = const Value.absent(),
             Value<String> fecha = const Value.absent(),
             Value<bool> archivado = const Value.absent(),
+            Value<double?> presupuesto = const Value.absent(),
+            Value<int> orden = const Value.absent(),
           }) =>
               ComprasCompanion(
             id: id,
             titulo: titulo,
             fecha: fecha,
             archivado: archivado,
+            presupuesto: presupuesto,
+            orden: orden,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String titulo,
             required String fecha,
             Value<bool> archivado = const Value.absent(),
+            Value<double?> presupuesto = const Value.absent(),
+            Value<int> orden = const Value.absent(),
           }) =>
               ComprasCompanion.insert(
             id: id,
             titulo: titulo,
             fecha: fecha,
             archivado: archivado,
+            presupuesto: presupuesto,
+            orden: orden,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>

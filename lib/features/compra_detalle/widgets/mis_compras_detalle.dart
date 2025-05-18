@@ -162,7 +162,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
         nombre: newNombre,
         precio: formattedPrecio,
         compraId: widget.compraDetalle.compraId,
-        fecha: widget.compraDetalle.fecha, // Preservar la fecha original
+        fecha: widget.compraDetalle.fecha,
       );
 
       await ref
@@ -174,7 +174,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 0, left: 15, bottom: 15),
+      padding: const EdgeInsets.only(right: 10, left: 15, bottom: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -239,7 +239,6 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                   ),
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  //onSubmitted: (_) async => await _saveDetalle(),
                 ),
               ),
             ],

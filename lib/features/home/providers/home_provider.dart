@@ -40,14 +40,9 @@ class HomeNotifier extends Notifier<HomeState> {
           ComprasCompanion(
             titulo: Value(compra.titulo),
             fecha: Value(compra.fecha.toIso8601String()),
+            presupuesto: Value(compra.presupuesto), // ✅ nuevo campo
           ),
         );
-
-    //final compraId = await _dbHelper.insertCompra(compra);
-
-    // for (var detalle in detalles) {
-    //   await _dbHelper.insertCompraDetalle(detalle.copyWith(compraId: compraId));
-    // }
 
     for (var detalle in detalles) {
       await _db.into(_db.compraDetalles).insert(
@@ -65,7 +60,8 @@ class HomeNotifier extends Notifier<HomeState> {
 
   Future<void> loadCompras() async {
     final compras = await (_db.select(_db.compras)
-          ..where((tbl) => tbl.archivado.equals(false)))
+          ..where((tbl) => tbl.archivado.equals(false))
+          ..orderBy([(tbl) => OrderingTerm(expression: tbl.orden)]))
         .get();
 
     // Obtener detalles asociados
@@ -150,47 +146,66 @@ class HomeNotifier extends Notifier<HomeState> {
       {required BuildContext context, CompraModel? compra}) async {
     final TextEditingController titleController =
         TextEditingController(text: compra?.titulo ?? '');
+    final TextEditingController presupuestoController =
+        TextEditingController(text: compra?.presupuesto?.toString() ?? '');
+
     final FocusNode focusNode = FocusNode();
+    final FocusNode presupuestoFocusNode = FocusNode();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       focusNode.requestFocus();
     });
 
-    final homeNotifier = ref.read(homeProvider.notifier);
-    dialogAgregarCompraKey = GlobalKey();
-
     return showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AddEditComprasDialog(
-            key: dialogAgregarCompraKey,
-            title: compra != null ? 'Editar compra' : 'Nueva compra',
-            onPressed: () {
-              _handleSaveCompra(
-                  context, titleController.text.trim(), homeNotifier,
-                  compra: compra);
-            },
-            titleController: titleController,
-            focusNode: focusNode,
-          );
-        });
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AddEditComprasDialog(
+          key: dialogAgregarCompraKey,
+          title: compra != null ? 'Editar compra' : 'Nueva compra',
+          titleController: titleController,
+          presupuestoController: presupuestoController,
+          focusNode: focusNode,
+          presupuestoFocusNode: presupuestoFocusNode,
+          onPressed: () {
+            _handleSaveCompra(
+              context,
+              titleController.text.trim(),
+              presupuestoController.text.trim(),
+              this,
+              compra: compra,
+            );
+          },
+        );
+      },
+    );
   }
 
-  void _handleSaveCompra(BuildContext context, title, HomeNotifier homeNotifier,
-      {CompraModel? compra}) {
+  void _handleSaveCompra(
+    BuildContext context,
+    String title,
+    String presupuestoText,
+    HomeNotifier homeNotifier, {
+    CompraModel? compra,
+  }) {
     if (title.isNotEmpty) {
+      final double? presupuesto = double.tryParse(presupuestoText);
+
       if (compra != null) {
-        final updatedCompra = compra.copyWith(titulo: title);
-        homeNotifier
-            .saveCompra(updatedCompra, []); // Guarda la compra actualizada
+        final updatedCompra = compra.copyWith(
+          titulo: title,
+          presupuesto: presupuesto,
+        );
+        homeNotifier.saveCompra(updatedCompra, []);
       } else {
-        final compra = CompraModel(
+        final nuevaCompra = CompraModel(
           titulo: title,
           fecha: DateTime.now(),
+          presupuesto: presupuesto,
         );
-        homeNotifier.saveCompra(compra, []);
+        homeNotifier.saveCompra(nuevaCompra, []);
       }
+
       Navigator.of(context).pop();
     }
   }
@@ -218,7 +233,7 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   String tituloScreen() {
-    if (!state.isComprasSelected) return ' Mis listas';
+    if (!state.isComprasSelected) return ' Listas';
     if (state.selectedCompras.isEmpty) return ' Seleccione elementos';
     if (state.selectedCompras.length > 1) {
       return ' ${state.selectedCompras.length} elementos seleccionados';
@@ -266,6 +281,22 @@ class HomeNotifier extends Notifier<HomeState> {
       ),
     );
   }
+
+  Future<void> updateOrdenCompras(List<CompraModel> nuevasCompras) async {
+    for (int i = 0; i < nuevasCompras.length; i++) {
+      final compra = nuevasCompras[i];
+      await (_db.update(_db.compras)..where((tbl) => tbl.id.equals(compra.id!)))
+          .write(ComprasCompanion(orden: Value(i)));
+    }
+
+    await loadCompras();
+  }
+
+  void toggleReordering() {
+    if (state.compras.isEmpty) return;
+
+    state = state.copyWith(isReordering: !state.isReordering);
+  }
 }
 
 class HomeState {
@@ -274,27 +305,33 @@ class HomeState {
   final bool isComprasSelected;
   final List<int> selectedCompras;
   CompraModel? selectedCompra;
+  final bool isReordering;
 
-  HomeState(
-      {this.compras = const [],
-      this.selectedCompraId,
-      this.isComprasSelected = false,
-      this.selectedCompras = const [],
-      this.selectedCompra});
+  HomeState({
+    this.compras = const [],
+    this.selectedCompraId,
+    this.isComprasSelected = false,
+    this.selectedCompras = const [],
+    this.selectedCompra,
+    this.isReordering = false,
+  });
 
-  HomeState copyWith(
-      {List<CompraModel>? compras,
-      int? selectedCompraId,
-      bool? isCompraSelected,
-      bool? isComprasSelected,
-      List<int>? selectedCompras,
-      CompraModel? selectedCompra}) {
+  HomeState copyWith({
+    List<CompraModel>? compras,
+    int? selectedCompraId,
+    bool? isCompraSelected,
+    bool? isComprasSelected,
+    List<int>? selectedCompras,
+    CompraModel? selectedCompra,
+    bool? isReordering,
+  }) {
     return HomeState(
       compras: compras ?? this.compras,
       selectedCompraId: selectedCompraId ?? this.selectedCompraId,
       isComprasSelected: isComprasSelected ?? this.isComprasSelected,
       selectedCompras: selectedCompras ?? this.selectedCompras,
       selectedCompra: selectedCompra ?? this.selectedCompra,
+      isReordering: isReordering ?? this.isReordering,
     );
   }
 }

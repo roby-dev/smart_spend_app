@@ -13,6 +13,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onArchive;
   final VoidCallback? onRestore;
 
+  final VoidCallback onReordering;
   final VoidCallback importFromJson;
   final VoidCallback exportToJson;
   final VoidCallback signOut;
@@ -26,6 +27,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onDelete,
     this.onCancel,
     this.onRestore,
+    required this.onReordering,
     required this.importFromJson,
     required this.exportToJson,
     this.user,
@@ -52,19 +54,20 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: const Icon(Icons.unarchive_outlined),
             onPressed: onRestore,
             tooltip: 'Restaurar',
-          )
-        else if (showDeleteAction) ...[
+          ),
+        if (showDeleteAction && !showRestoreOnly)
           IconButton(
             icon: const Icon(Icons.archive_outlined),
             onPressed: onArchive,
             tooltip: 'Archivar',
           ),
+        if (showRestoreOnly || showDeleteAction)
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: onDelete,
             tooltip: 'Eliminar',
-          )
-        ] else
+          ),
+        if (!(showRestoreOnly || showDeleteAction))
           PopupMenuButton<int>(
             onSelected: (item) {
               if (item == 0) {
@@ -73,6 +76,8 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 importFromJson();
               } else if (item == 2) {
                 signOut();
+              } else if (item == 3) {
+                onReordering();
               }
             },
             icon: photoUrl == null
@@ -99,6 +104,10 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                   value: 2,
                   child: Text('Cerrar sesión'),
                 ),
+              PopupMenuItem<int>(
+                value: 3,
+                child: Text('Mover compras'),
+              ),
             ],
           ),
       ],
