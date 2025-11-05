@@ -60,13 +60,13 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
   Widget build(BuildContext context) {
     final compraState = ref.watch(compraDetalleProvider);
     final compra = compraState.compra;
+    final presupuesto = compra?.presupuesto;
 
     final total = compraState.detalles.fold<double>(
       0.0,
       (sum, item) => sum + item.precio,
     );
 
-    final presupuesto = compra?.presupuesto;
     final restante = presupuesto != null ? presupuesto - total : null;
     final sobrepasado = restante != null && restante < 0;
 

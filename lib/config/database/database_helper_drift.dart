@@ -4,6 +4,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:smart_spend_app/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/models/compra_model.dart';
 
 part 'database_helper_drift.g.dart';
 
@@ -60,6 +62,51 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> updateCompra(ComprasCompanion compra) {
     return update(compras).replace(compra);
+  }
+
+  Future<List<CompraModel>> getComprasConDetalles() async {
+    final query = select(compras).join([
+      leftOuterJoin(compraDetalles, compraDetalles.compra.equalsExp(compras.id))
+    ])
+      ..where(compras.archivado.equals(false))
+      ..orderBy([OrderingTerm.asc(compras.orden)]);
+
+    final rows = await query.get();
+
+    // Agrupar resultados
+    final Map<int, CompraModel> comprasMap = {};
+
+    for (final row in rows) {
+      final compra = row.readTable(compras);
+      final detalle = row.readTableOrNull(compraDetalles);
+
+      comprasMap.putIfAbsent(
+        compra.id,
+        () => CompraModel(
+          id: compra.id,
+          titulo: compra.titulo,
+          fecha: DateTime.parse(compra.fecha),
+          presupuesto: compra.presupuesto,
+          archivado: compra.archivado,
+          orden: compra.orden,
+          detalles: [],
+        ),
+      );
+
+      if (detalle != null) {
+        comprasMap[compra.id]!.detalles.add(
+              CompraDetalleModel(
+                id: detalle.id,
+                nombre: detalle.nombre,
+                precio: detalle.precio,
+                compraId: detalle.compra,
+                fecha: DateTime.parse(detalle.fecha),
+              ),
+            );
+      }
+    }
+
+    return comprasMap.values.toList();
   }
 }
 

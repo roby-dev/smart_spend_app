@@ -23,16 +23,18 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   GlobalKey? dialogAgregarDetalleKey;
 
   Future<void> initDatos({required bool withLoad}) async {
-    state = state.copyWith(
-        isEditing: false,
-        isDetallesSelected: false,
-        detalles: [],
-        isLoading: true,
-        compra: ref.read(homeProvider).selectedCompra);
+    final compra = ref.read(homeProvider).selectedCompra;
 
-    if (withLoad) {
-      await loadCompraDetalles(ref.read(homeProvider).selectedCompraId!);
-    }
+    state = state.copyWith(
+      isEditing: false,
+      isDetallesSelected: false,
+      detalles: compra?.detalles ?? [],
+      isLoading: false,
+      compra: compra,
+      compraId: compra?.id,
+    );
+
+    if (withLoad) {}
   }
 
   void initLoading() {
@@ -63,7 +65,8 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   }
 
   Future<void> addDetalle(CompraDetalleModel detalle) async {
-    await _db.into(_db.compraDetalles).insert(
+    // Insertar el nuevo detalle
+    final newId = await _db.into(_db.compraDetalles).insert(
           CompraDetallesCompanion(
             nombre: Value(detalle.nombre),
             precio: Value(detalle.precio),
@@ -72,8 +75,23 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
           ),
         );
 
-    await loadCompraDetalles(detalle.compraId);
-    await ref.read(homeProvider.notifier).loadCompras();
+    // Crear modelo completo con ID generado
+    final newDetalle = detalle.copyWith(id: newId);
+
+    // Actualizar el estado local
+    final updatedDetalles = [...state.detalles, newDetalle];
+
+    state = state.copyWith(detalles: updatedDetalles);
+
+    // Actualizar también la compra seleccionada en HomeNotifier
+    final homeNotifier = ref.read(homeProvider.notifier);
+    final selectedCompra = ref.read(homeProvider).selectedCompra;
+
+    if (selectedCompra != null) {
+      final updatedCompra = selectedCompra.copyWith(detalles: updatedDetalles);
+      homeNotifier.state =
+          homeNotifier.state.copyWith(selectedCompra: updatedCompra);
+    }
   }
 
   Future<void> updateDetalle(

@@ -60,36 +60,7 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   Future<void> loadCompras() async {
-    final compras = await (_db.select(_db.compras)
-          ..where((tbl) => tbl.archivado.equals(false))
-          ..orderBy([(tbl) => OrderingTerm(expression: tbl.orden)]))
-        .get();
-
-    // Obtener detalles asociados
-    final comprasConDetalles = await Future.wait(compras.map((compra) async {
-      final detalles = await (_db.select(_db.compraDetalles)
-            ..where((tbl) => tbl.compra.equals(compra.id)))
-          .get();
-
-      return CompraModel(
-        id: compra.id,
-        titulo: compra.titulo,
-        fecha: DateTime.parse(compra.fecha),
-        presupuesto: compra.presupuesto,
-        archivado: compra.archivado,
-        orden: compra.orden,
-        detalles: detalles.map((detalle) {
-          return CompraDetalleModel(
-            id: detalle.id,
-            nombre: detalle.nombre,
-            precio: detalle.precio,
-            compraId: detalle.compra,
-            fecha: DateTime.parse(detalle.fecha),
-          );
-        }).toList(),
-      );
-    }).toList());
-
+    final comprasConDetalles = await _db.getComprasConDetalles();
     state = state.copyWith(compras: comprasConDetalles);
   }
 

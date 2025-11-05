@@ -15,8 +15,13 @@ class HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      await ref.read(homeProvider.notifier).loadCompras();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final homeNotifier = ref.read(homeProvider.notifier);
+
+      // Espera un frame y luego carga los datos
+      await Future.delayed(const Duration(milliseconds: 50));
+      await homeNotifier.loadCompras();
+
       FlutterNativeSplash.remove();
     });
   }
