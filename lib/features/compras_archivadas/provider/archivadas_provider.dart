@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/main.dart';
-import 'package:smart_spend_app/models/compra_model.dart';
-import 'package:smart_spend_app/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/domain/models/compra_model.dart';
+import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
 
 final archivadasProvider =
     NotifierProvider<ArchivadasNotifier, ArchivadasState>(

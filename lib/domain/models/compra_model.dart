@@ -1,4 +1,4 @@
-import 'package:smart_spend_app/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
 
 class CompraModel {
   final int? id;

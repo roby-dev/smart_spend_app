@@ -1,67 +1,53 @@
-import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 import 'package:smart_spend_app/config/router/app_router.dart';
-import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
+import 'package:smart_spend_app/data/repositories/compra_repository_provider.dart';
+import 'package:smart_spend_app/domain/repositories/compra_repository.dart';
 import 'package:smart_spend_app/features/shared/utils/utils.dart';
 import 'package:smart_spend_app/main.dart';
 import 'package:smart_spend_app/features/home/widgets/dialog_agregar_editar_compra.dart';
 import 'package:smart_spend_app/features/home/widgets/dialog_confirmar_eliminar.dart';
-import 'package:smart_spend_app/models/compra_detalle_model.dart';
-import 'package:smart_spend_app/models/compra_model.dart';
+import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/domain/models/compra_model.dart';
 
-final homeProvider =
-    NotifierProvider<HomeNotifier, HomeState>(() => HomeNotifier());
+final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
+  final repository = ref.watch(compraRepositoryProvider);
+  final db = ref.read(databaseProvider);
+  return HomeNotifier(repository, db);
+});
 
-class HomeNotifier extends Notifier<HomeState> {
-  @override
-  HomeState build() {
-    return HomeState();
-  }
+class HomeNotifier extends StateNotifier<HomeState> {
+  final CompraRepository _repository;
+  final AppDatabase _db;
+
+  HomeNotifier(this._repository, this._db) : super(HomeState());
 
   final GoRouter router = appRouter;
 
-  AppDatabase get _db => ref.read(databaseProvider);
   GlobalKey? dialogAgregarCompraKey;
 
   Future<void> updateCompra(CompraModel compra) async {
-    await _db.updateCompra(ComprasCompanion(
-        id: Value(compra.id!),
-        fecha: Value(compra.fecha.toIso8601String()),
-        titulo: Value(compra.titulo)));
+    await _repository.updateCompra(compra);
 
     await loadCompras();
   }
 
   Future<void> saveCompra(
       CompraModel compra, List<CompraDetalleModel> detalles) async {
-    final compraId = await _db.into(_db.compras).insert(
-          ComprasCompanion(
-            titulo: Value(compra.titulo),
-            fecha: Value(compra.fecha.toIso8601String()),
-            presupuesto: Value(compra.presupuesto), // ✅ nuevo campo
-          ),
-        );
-
-    for (var detalle in detalles) {
-      await _db.into(_db.compraDetalles).insert(
-            CompraDetallesCompanion(
-              nombre: Value(detalle.nombre),
-              precio: Value(detalle.precio),
-              compra: Value(compraId),
-              fecha: Value(detalle.fecha.toIso8601String()),
-            ),
-          );
-    }
+    await _repository.createCompra(compra);
 
     await loadCompras();
   }
 
   Future<void> loadCompras() async {
-    final comprasConDetalles = await _db.getComprasConDetalles();
-    state = state.copyWith(compras: comprasConDetalles);
+    try {
+      final compras = await _repository.getComprasWithDetails();
+      state = state.copyWith(compras: compras);
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
   void selectCompra(CompraModel compra) {
@@ -72,11 +58,7 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   Future<void> deleteCompra(int compraId) async {
-    await (_db.delete(_db.compras)..where((tbl) => tbl.id.equals(compraId)))
-        .go();
-    await (_db.delete(_db.compraDetalles)
-          ..where((tbl) => tbl.compra.equals(compraId)))
-        .go();
+    await _repository.deleteCompra(compraId);
 
     await loadCompras();
   }
@@ -219,13 +201,11 @@ class HomeNotifier extends Notifier<HomeState> {
 
   Future<void> goDetalleCompra({required CompraModel compra}) async {
     selectCompra(compra);
-    ref.read(compraDetalleProvider.notifier).initLoading();
     router.push('/compra-detalle');
   }
 
   Future<void> archiveCompra(int compraId) async {
-    await (_db.update(_db.compras)..where((tbl) => tbl.id.equals(compraId)))
-        .write(const ComprasCompanion(archivado: Value(true)));
+    await _repository.archiveCompra(compraId);
 
     await loadCompras();
   }
@@ -258,11 +238,7 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   Future<void> updateOrdenCompras(List<CompraModel> nuevasCompras) async {
-    for (int i = 0; i < nuevasCompras.length; i++) {
-      final compra = nuevasCompras[i];
-      await (_db.update(_db.compras)..where((tbl) => tbl.id.equals(compra.id!)))
-          .write(ComprasCompanion(orden: Value(i)));
-    }
+    await _repository.updateComprasOrder(nuevasCompras);
 
     await loadCompras();
   }
@@ -274,10 +250,8 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   shareJson(BuildContext context) async {
-    final db = ref.read(databaseProvider);
-
     try {
-      await Utils.exportAndShareJson(db);
+      await Utils.exportAndShareJson(_db);
     } catch (e) {
       print("Error al compartir JSON: $e");
       ScaffoldMessenger.of(context).showSnackBar(

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/features/shared/utils/utils.dart';
-import 'package:smart_spend_app/models/compra_model.dart';
+import 'package:smart_spend_app/domain/models/compra_model.dart';
 
 import 'package:smart_spend_app/features/shared/widgets/checkbox_rounded.dart';
 
