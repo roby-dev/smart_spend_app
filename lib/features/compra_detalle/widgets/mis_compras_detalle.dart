@@ -76,8 +76,6 @@ class MisComprasDetalle extends ConsumerWidget {
                   child: _ComprasDetalleRow(
                     compraDetalle: compraDetalle,
                     index: index,
-                    isSelected:
-                        compraDetalleState.selectedDetalles.contains(index),
                   ),
                 );
               },
@@ -89,12 +87,10 @@ class MisComprasDetalle extends ConsumerWidget {
 class _ComprasDetalleRow extends ConsumerStatefulWidget {
   final CompraDetalleModel compraDetalle;
   final int index;
-  final bool isSelected;
 
   const _ComprasDetalleRow({
     required this.compraDetalle,
     required this.index,
-    required this.isSelected,
   });
 
   @override

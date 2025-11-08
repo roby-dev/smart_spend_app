@@ -22,7 +22,7 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
   void initState() {
     super.initState();
     Future.microtask(() async {
-      await ref.read(compraDetalleProvider.notifier).initDatos(withLoad: true);
+      await ref.read(compraDetalleProvider.notifier).initDatos();
       final compra = ref.read(compraDetalleProvider).compra;
       _titleController.text = compra?.titulo ?? '';
       _presupuestoController.text = compra?.presupuesto?.toString() ?? '';
@@ -76,35 +76,27 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            compraState.isDetallesSelected
-                ? Text(
-                    ref.read(compraDetalleProvider.notifier).tituloScreen(),
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w200,
-                    ),
-                  )
-                : GestureDetector(
-                    onTap: () => _focusNode.requestFocus(),
-                    child: TextFormField(
-                      controller: _titleController,
-                      focusNode: _focusNode,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: AppColors.gray500,
-                            width: 2.0,
-                          ),
-                        ),
-                      ),
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w200,
-                      ),
+            GestureDetector(
+              onTap: () => _focusNode.requestFocus(),
+              child: TextFormField(
+                controller: _titleController,
+                focusNode: _focusNode,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: AppColors.gray500,
+                      width: 2.0,
                     ),
                   ),
+                ),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w200,
+                ),
+              ),
+            ),
             // 👇 Presupuesto debajo del título
             Padding(
               padding: const EdgeInsets.only(bottom: 6),

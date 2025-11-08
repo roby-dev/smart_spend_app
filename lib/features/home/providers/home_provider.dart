@@ -21,12 +21,10 @@ final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
 class HomeNotifier extends StateNotifier<HomeState> {
   final CompraRepository _repository;
   final AppDatabase _db;
-
-  HomeNotifier(this._repository, this._db) : super(HomeState());
-
+  GlobalKey? dialogAgregarCompraKey;
   final GoRouter router = appRouter;
 
-  GlobalKey? dialogAgregarCompraKey;
+  HomeNotifier(this._repository, this._db) : super(HomeState());
 
   Future<void> updateCompra(CompraModel compra) async {
     await _repository.updateCompra(compra);
@@ -55,6 +53,22 @@ class HomeNotifier extends StateNotifier<HomeState> {
         selectedCompraId: compra.id!,
         isCompraSelected: true,
         selectedCompra: compra);
+  }
+
+  // Método para actualizar la compra seleccionada sin recargar todo
+  void updateSelectedCompra(CompraModel updatedCompra) {
+    // Actualizar en la lista de compras
+    final updatedCompras = state.compras.map((compra) {
+      if (compra.id == updatedCompra.id) {
+        return updatedCompra;
+      }
+      return compra;
+    }).toList();
+
+    state = state.copyWith(
+      compras: updatedCompras,
+      selectedCompra: updatedCompra,
+    );
   }
 
   Future<void> deleteCompra(int compraId) async {
