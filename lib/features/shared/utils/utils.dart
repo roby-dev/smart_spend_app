@@ -19,8 +19,9 @@ class Utils {
     }
   }
 
-  static Future<void> exportAndShareJson(AppDatabase db) async {
-    final json = await db.exportToJson();
+  static Future<void> exportAndShareJson(AppDatabase db,
+      {List<int>? ids}) async {
+    final json = await db.exportToJson(ids: ids);
 
     final directory = await getTemporaryDirectory();
     final now = DateTime.now();

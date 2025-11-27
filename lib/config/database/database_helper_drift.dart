@@ -47,8 +47,12 @@ LazyDatabase _openConnection() {
 }
 
 extension DriftExportImport on AppDatabase {
-  Future<String> exportToJson() async {
-    final comprasList = await select(compras).get();
+  Future<String> exportToJson({List<int>? ids}) async {
+    final query = select(compras);
+    if (ids != null && ids.isNotEmpty) {
+      query.where((tbl) => tbl.id.isIn(ids));
+    }
+    final comprasList = await query.get();
     final List<Map<String, dynamic>> exportData = [];
 
     for (var compra in comprasList) {

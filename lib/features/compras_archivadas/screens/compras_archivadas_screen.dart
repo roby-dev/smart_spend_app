@@ -16,8 +16,12 @@ class _ComprasArchivadasScreenState
   @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      await ref.read(archivadasProvider.notifier).loadArchivadas();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Delay loading to prioritize main screen rendering
+      await Future.delayed(const Duration(milliseconds: 200));
+      if (mounted) {
+        await ref.read(archivadasProvider.notifier).loadArchivadas();
+      }
     });
   }
 

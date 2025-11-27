@@ -50,6 +50,9 @@ class Layout1State extends ConsumerState<Layout1> {
         onCancel: () {
           ref.read(homeProvider.notifier).toggleComprasSelection();
         },
+        onShareSelected: () async {
+          await ref.read(homeProvider.notifier).shareSelectedJson(context);
+        },
         exportToJson: () async {
           await ref.read(homeProvider.notifier).shareJson(context);
         },

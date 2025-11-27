@@ -215,7 +215,8 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   Future<void> goDetalleCompra({required CompraModel compra}) async {
     selectCompra(compra);
-    router.push('/compra-detalle');
+    await router.push('/compra-detalle');
+    await loadCompras();
   }
 
   Future<void> archiveCompra(int compraId) async {
@@ -268,6 +269,19 @@ class HomeNotifier extends StateNotifier<HomeState> {
       await Utils.exportAndShareJson(_db);
     } catch (e) {
       print("Error al compartir JSON: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al compartir el archivo')),
+      );
+    }
+  }
+
+  shareSelectedJson(BuildContext context) async {
+    try {
+      if (state.selectedCompras.isEmpty) return;
+      await Utils.exportAndShareJson(_db, ids: state.selectedCompras);
+      toggleComprasSelection(); // Exit selection mode after sharing
+    } catch (e) {
+      print("Error al compartir JSON seleccionado: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error al compartir el archivo')),
       );

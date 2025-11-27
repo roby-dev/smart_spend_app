@@ -11,6 +11,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onCancel;
   final VoidCallback? onArchive;
+  final VoidCallback? onShareSelected;
   final VoidCallback? onRestore;
 
   final VoidCallback onReordering;
@@ -33,6 +34,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.user,
     required this.signOut,
     this.onArchive,
+    this.onShareSelected,
   });
 
   @override
@@ -54,6 +56,12 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: const Icon(Icons.unarchive_outlined),
             onPressed: onRestore,
             tooltip: 'Restaurar',
+          ),
+        if (showDeleteAction && !showRestoreOnly)
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            onPressed: onShareSelected,
+            tooltip: 'Compartir seleccionados',
           ),
         if (showDeleteAction && !showRestoreOnly)
           IconButton(

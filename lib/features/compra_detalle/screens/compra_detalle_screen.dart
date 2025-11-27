@@ -39,9 +39,7 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
         if (!_presupuestoFocus.hasFocus) {
           final text = _presupuestoController.text.trim();
           final valor = double.tryParse(text);
-          ref
-              .read(compraDetalleProvider.notifier)
-              .savePresupuesto(valor == null ? null : valor);
+          ref.read(compraDetalleProvider.notifier).savePresupuesto(valor);
         }
       });
     });
