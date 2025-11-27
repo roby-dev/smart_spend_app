@@ -176,20 +176,51 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
                               fontWeight: FontWeight.w300,
                             ),
                           ),
-                          if (presupuesto != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
-                              child: Text(
-                                'Restante: S/ ${restante!.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w300,
-                                  color: sobrepasado
-                                      ? Colors.red
-                                      : AppColors.gray600,
+                          if (presupuesto != null && presupuesto > 0) ...[
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: LinearProgressIndicator(
+                                value: (total / presupuesto).clamp(0.0, 1.0),
+                                backgroundColor: AppColors.primary100,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  total > presupuesto
+                                      ? AppColors.error500
+                                      : AppColors.primary700,
                                 ),
+                                minHeight: 6,
                               ),
                             ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Restante: S/ ${restante!.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: sobrepasado
+                                          ? AppColors.error500
+                                          : AppColors.gray600,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${((total / presupuesto) * 100).toStringAsFixed(0)}%',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: sobrepasado
+                                          ? AppColors.error500
+                                          : AppColors.primary700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
