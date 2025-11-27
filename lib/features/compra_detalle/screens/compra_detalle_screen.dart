@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/compra_detalle/providers/compra_detalle_provider.dart';
 import 'package:smart_spend_app/features/compra_detalle/widgets/mis_compras_detalle.dart';
+import 'package:smart_spend_app/features/compra_detalle/widgets/smart_add_sheet.dart';
 
 class CompraDetalleScreen extends ConsumerStatefulWidget {
   const CompraDetalleScreen({super.key});
@@ -74,26 +75,43 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: () => _focusNode.requestFocus(),
-              child: TextFormField(
-                controller: _titleController,
-                focusNode: _focusNode,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: AppColors.gray500,
-                      width: 2.0,
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _focusNode.requestFocus(),
+                    child: TextFormField(
+                      controller: _titleController,
+                      focusNode: _focusNode,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: AppColors.gray500,
+                            width: 2.0,
+                          ),
+                        ),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w200,
+                      ),
                     ),
                   ),
                 ),
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w200,
+                IconButton(
+                  icon: const Icon(Icons.auto_awesome,
+                      color: AppColors.primary500),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => const SmartAddSheet(),
+                    );
+                  },
                 ),
-              ),
+              ],
             ),
             // 👇 Presupuesto debajo del título
             Padding(
