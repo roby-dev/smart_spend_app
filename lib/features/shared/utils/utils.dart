@@ -14,13 +14,17 @@ class Utils {
     } else if (compraFecha.year == now.year) {
       return DateFormat('d \'de\' MMMM - hh:mm a', 'es').format(compraFecha);
     } else {
-      return DateFormat('d \'de\' MMMM \'de\' y - hh:mm a', 'es')
-          .format(compraFecha);
+      return DateFormat(
+        'd \'de\' MMMM \'de\' y - hh:mm a',
+        'es',
+      ).format(compraFecha);
     }
   }
 
-  static Future<void> exportAndShareJson(AppDatabase db,
-      {List<int>? ids}) async {
+  static Future<void> exportAndShareJson(
+    AppDatabase db, {
+    List<int>? ids,
+  }) async {
     final json = await db.exportToJson(ids: ids);
 
     final directory = await getTemporaryDirectory();
@@ -31,9 +35,11 @@ class Utils {
 
     await file.writeAsString(json);
 
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      text: '📦 Aquí tienes el backup de SmartSpend',
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        text: '📦 Aquí tienes el backup de SmartSpend',
+      ),
     );
   }
 }

@@ -12,19 +12,22 @@ import 'package:smart_spend_app/features/home/widgets/dialog_confirmar_eliminar.
 import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
 import 'package:smart_spend_app/domain/models/compra_model.dart';
 
-final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
-  final repository = ref.watch(compraRepositoryProvider);
-  final db = ref.read(databaseProvider);
-  return HomeNotifier(repository, db);
-});
+final homeProvider = NotifierProvider<HomeNotifier, HomeState>(
+  () => HomeNotifier(),
+);
 
-class HomeNotifier extends StateNotifier<HomeState> {
-  final CompraRepository _repository;
-  final AppDatabase _db;
+class HomeNotifier extends Notifier<HomeState> {
+  late final CompraRepository _repository;
+  late final AppDatabase _db;
   GlobalKey? dialogAgregarCompraKey;
   final GoRouter router = appRouter;
 
-  HomeNotifier(this._repository, this._db) : super(HomeState());
+  @override
+  HomeState build() {
+    _repository = ref.watch(compraRepositoryProvider);
+    _db = ref.read(databaseProvider);
+    return HomeState();
+  }
 
   Future<void> updateCompra(CompraModel compra) async {
     await _repository.updateCompra(compra);
@@ -33,7 +36,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   Future<void> saveCompra(
-      CompraModel compra, List<CompraDetalleModel> detalles) async {
+    CompraModel compra,
+    List<CompraDetalleModel> detalles,
+  ) async {
     await _repository.createCompra(compra);
 
     await loadCompras();
@@ -50,9 +55,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
   void selectCompra(CompraModel compra) {
     state = state.copyWith(
-        selectedCompraId: compra.id!,
-        isCompraSelected: true,
-        selectedCompra: compra);
+      selectedCompraId: compra.id!,
+      isCompraSelected: true,
+      selectedCompra: compra,
+    );
   }
 
   // Método para actualizar la compra seleccionada sin recargar todo
@@ -82,10 +88,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
   }
 
   void deselectAllCompras() {
-    state = state.copyWith(
-      isCompraSelected: false,
-      selectedCompras: [],
-    );
+    state = state.copyWith(isCompraSelected: false, selectedCompras: []);
   }
 
   void toggleCompraSelection(int compraId) {
@@ -113,12 +116,16 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> showAddEditCompraDialog(
-      {required BuildContext context, CompraModel? compra}) async {
-    final TextEditingController titleController =
-        TextEditingController(text: compra?.titulo ?? '');
-    final TextEditingController presupuestoController =
-        TextEditingController(text: compra?.presupuesto?.toString() ?? '');
+  Future<void> showAddEditCompraDialog({
+    required BuildContext context,
+    CompraModel? compra,
+  }) async {
+    final TextEditingController titleController = TextEditingController(
+      text: compra?.titulo ?? '',
+    );
+    final TextEditingController presupuestoController = TextEditingController(
+      text: compra?.presupuesto?.toString() ?? '',
+    );
 
     final FocusNode focusNode = FocusNode();
     final FocusNode presupuestoFocusNode = FocusNode();
@@ -181,8 +188,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> showDeleteConfirmationDialog(
-      {required BuildContext context, int? compraId}) async {
+  Future<void> showDeleteConfirmationDialog({
+    required BuildContext context,
+    int? compraId,
+  }) async {
     dialogAgregarCompraKey = GlobalKey();
 
     return showDialog<void>(
@@ -190,15 +199,16 @@ class HomeNotifier extends StateNotifier<HomeState> {
       barrierDismissible: true,
       builder: (BuildContext context) {
         return DeleteConfirmationDialog(
-            key: dialogAgregarCompraKey,
-            onPressed: () {
-              if (compraId != null) {
-                deleteCompra(compraId);
-              } else {
-                deleteSelectedCompras();
-              }
-              Navigator.of(context).pop();
-            });
+          key: dialogAgregarCompraKey,
+          onPressed: () {
+            if (compraId != null) {
+              deleteCompra(compraId);
+            } else {
+              deleteSelectedCompras();
+            }
+            Navigator.of(context).pop();
+          },
+        );
       },
     );
   }
@@ -264,7 +274,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     state = state.copyWith(isReordering: !state.isReordering);
   }
 
-  shareJson(BuildContext context) async {
+  Future<void> shareJson(BuildContext context) async {
     try {
       await Utils.exportAndShareJson(_db);
     } catch (e) {
@@ -275,7 +285,7 @@ class HomeNotifier extends StateNotifier<HomeState> {
     }
   }
 
-  shareSelectedJson(BuildContext context) async {
+  Future<void> shareSelectedJson(BuildContext context) async {
     try {
       if (state.selectedCompras.isEmpty) return;
       await Utils.exportAndShareJson(_db, ids: state.selectedCompras);

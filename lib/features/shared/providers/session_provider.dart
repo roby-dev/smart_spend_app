@@ -13,8 +13,9 @@ import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 import 'package:smart_spend_app/main.dart';
 
-final sessionProvider =
-    NotifierProvider<SessionNotifier, SessionState>(() => SessionNotifier());
+final sessionProvider = NotifierProvider<SessionNotifier, SessionState>(
+  () => SessionNotifier(),
+);
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -24,34 +25,35 @@ class SessionNotifier extends Notifier<SessionState> {
     return SessionState();
   }
 
-  final GoogleSignIn googleSignIn = GoogleSignIn(
-    scopes: [
-      drive.DriveApi.driveFileScope,
-    ],
-  );
+  final GoogleSignIn googleSignIn = GoogleSignIn.instance;
 
-  signInAndExport(BuildContext context) async {
+  Future<void> _initializeGoogleSignIn() async {
+    await googleSignIn.initialize(serverClientId: null);
+  }
+
+  Future<void> signInAndExport(BuildContext context) async {
     bool? result = await showDialog(
-        barrierDismissible: true,
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text(
-              'Atención',
-              style: TextStyle(fontWeight: FontWeight.w300),
+      barrierDismissible: true,
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Atención',
+            style: TextStyle(fontWeight: FontWeight.w300),
+          ),
+          content: const Text(
+            'Para exportar los datos, primero debe iniciar sesión',
+            style: TextStyle(fontWeight: FontWeight.w300),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Aceptar'),
             ),
-            content: const Text(
-              'Para exportar los datos, primero debe iniciar sesión',
-              style: TextStyle(fontWeight: FontWeight.w300),
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Aceptar'),
-              ),
-            ],
-          );
-        });
+          ],
+        );
+      },
+    );
 
     if (result == null || result == false) {
       return;
@@ -81,19 +83,20 @@ class SessionNotifier extends Notifier<SessionState> {
       String formattedDate = DateFormat('dd-MM-yyyy-HH-mm').format(now);
       String fileName = "backup-$formattedDate.json";
 
-      // Autenticación con Google Drive
-      final GoogleSignInAuthentication googleAuth =
-          await googleSignIn.currentUser!.authentication;
+      // Autenticación con Google Drive - v7 API
+      final currentUser = await googleSignIn.authenticate();
+      final authorization = await currentUser.authorizationClient
+          .authorizeScopes([drive.DriveApi.driveFileScope]);
 
       final AuthClient authClient = authenticatedClient(
         IOClient(),
         AccessCredentials(
           AccessToken(
             'Bearer',
-            googleAuth.accessToken!,
-            DateTime.now().toUtc().add(Duration(hours: 1)),
+            authorization.accessToken,
+            DateTime.now().toUtc().add(const Duration(hours: 1)),
           ),
-          googleAuth.idToken,
+          null,
           ['https://www.googleapis.com/auth/drive.file'],
         ),
       );
@@ -109,14 +112,20 @@ class SessionNotifier extends Notifier<SessionState> {
       );
 
       print('Uploaded File ID: ${response.id}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Backup subido a Google Drive')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Backup subido a Google Drive')),
+        );
+      }
     } catch (e) {
       print("Error uploading to Google Drive: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al subir el backup a Google Drive')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al subir el backup a Google Drive'),
+          ),
+        );
+      }
     }
   }
 
@@ -140,59 +149,66 @@ class SessionNotifier extends Notifier<SessionState> {
           // Importar los datos usando Drift
           await db.importFromJson(jsonString);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Datos importados exitosamente')),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Datos importados exitosamente')),
+            );
+          }
 
           ref.read(homeProvider.notifier).loadCompras();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('No se pudo acceder al archivo seleccionado')),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No se pudo acceder al archivo seleccionado'),
+              ),
+            );
+          }
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se seleccionó ningún archivo')),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se seleccionó ningún archivo')),
+          );
+        }
       }
     } catch (e) {
       print("Error importing from file: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al importar el archivo')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al importar el archivo')),
+        );
+      }
     }
   }
 
-  signOut() async {
+  Future<void> signOut() async {
     await signOutGoogle();
     state = state.copyWith(user: null);
   }
 
   Future<User?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    await _initializeGoogleSignIn();
+    final GoogleSignInAccount? googleUser = await googleSignIn.authenticate();
     if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
     final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
 
-    final UserCredential userCredential =
-        await _auth.signInWithCredential(credential);
-    final User? user = userCredential.user;
-    state = state.copyWith(
-      user: user,
+    final UserCredential userCredential = await _auth.signInWithCredential(
+      credential,
     );
+    final User? user = userCredential.user;
+    state = state.copyWith(user: user);
 
     return user;
   }
 
   Future<void> signOutGoogle() async {
-    await googleSignIn.signOut();
+    await googleSignIn.disconnect();
     print("User Signed Out");
   }
 }

@@ -37,46 +37,29 @@ class MisComprasDetalle extends ConsumerWidget {
               ),
               itemBuilder: (context, index) {
                 final compraDetalle = compraDetalleState.detalles[index];
-                return Dismissible(
-                  key: Key(compraDetalle.id!.toString()),
-                  onDismissed: (direction) async {
+                return _AnimatedDismissible(
+                  compraDetalle: compraDetalle,
+                  index: index,
+                  onDismissed: () async {
                     await ref
                         .read(compraDetalleProvider.notifier)
                         .deleteCurrentCompraDetalle(compraDetalle.id!);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: const Text('Compra eliminada'),
-                      action: SnackBarAction(
-                        label: 'Deshacer',
-                        onPressed: () async {
-                          await ref
-                              .read(compraDetalleProvider.notifier)
-                              .addDetalle(compraDetalle);
-                        },
-                      ),
-                    ));
-                  },
-                  background: Container(
-                    color: Colors.purple[100],
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.delete,
-                          color: Colors.white,
-                        ),
-                        Text(
-                          'Borrar',
-                          style: TextStyle(
-                            color: Colors.white,
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Compra eliminada'),
+                          action: SnackBarAction(
+                            label: 'Deshacer',
+                            onPressed: () async {
+                              await ref
+                                  .read(compraDetalleProvider.notifier)
+                                  .addDetalle(compraDetalle);
+                            },
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  child: _ComprasDetalleRow(
-                    compraDetalle: compraDetalle,
-                    index: index,
-                  ),
+                      );
+                    }
+                  },
                 );
               },
             ),
@@ -88,10 +71,7 @@ class _ComprasDetalleRow extends ConsumerStatefulWidget {
   final CompraDetalleModel compraDetalle;
   final int index;
 
-  const _ComprasDetalleRow({
-    required this.compraDetalle,
-    required this.index,
-  });
+  const _ComprasDetalleRow({required this.compraDetalle, required this.index});
 
   @override
   _ComprasDetalleRowState createState() => _ComprasDetalleRowState();
@@ -106,10 +86,12 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
   @override
   void initState() {
     super.initState();
-    _nombreController =
-        TextEditingController(text: widget.compraDetalle.nombre);
+    _nombreController = TextEditingController(
+      text: widget.compraDetalle.nombre,
+    );
     _precioController = TextEditingController(
-        text: widget.compraDetalle.precio.toStringAsFixed(2));
+      text: widget.compraDetalle.precio.toStringAsFixed(2),
+    );
     _nombreFocusNode = FocusNode();
     _precioFocusNode = FocusNode();
 
@@ -208,9 +190,7 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                   color: AppColors.gray500,
                 ),
               ),
-              const SizedBox(
-                width: 5.0,
-              ),
+              const SizedBox(width: 5.0),
               SizedBox(
                 width: 70,
                 child: TextField(
@@ -233,8 +213,9 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
                     fontWeight: FontWeight.w300,
                     color: AppColors.gray700,
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                 ),
               ),
             ],
@@ -249,6 +230,128 @@ class _ComprasDetalleRowState extends ConsumerState<_ComprasDetalleRow> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AnimatedDismissible extends StatefulWidget {
+  final CompraDetalleModel compraDetalle;
+  final int index;
+  final VoidCallback onDismissed;
+
+  const _AnimatedDismissible({
+    required this.compraDetalle,
+    required this.index,
+    required this.onDismissed,
+  });
+
+  @override
+  State<_AnimatedDismissible> createState() => _AnimatedDismissibleState();
+}
+
+class _AnimatedDismissibleState extends State<_AnimatedDismissible>
+    with SingleTickerProviderStateMixin {
+  double _dragExtent = 0;
+  late AnimationController _shakeController;
+  late Animation<double> _shakeAnimation;
+  bool _shaking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _shakeAnimation = TweenSequence<double>(
+      [
+        TweenSequenceItem(tween: Tween(begin: 0, end: -0.15), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: -0.15, end: 0.15), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: 0.15, end: -0.08), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: -0.08, end: 0.0), weight: 1),
+      ],
+    ).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _shakeController.dispose();
+    super.dispose();
+  }
+
+  void _onUpdate(DismissUpdateDetails details) {
+    final newExtent = details.progress;
+    if (!_shaking && newExtent > 0.3) {
+      _shaking = true;
+      _shakeController.forward(from: 0);
+    } else if (newExtent < 0.25) {
+      _shaking = false;
+    }
+    setState(() => _dragExtent = newExtent);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = _dragExtent.clamp(0.0, 1.0);
+    final iconScale = (0.5 + progress * 1.0).clamp(0.5, 1.2);
+    final bgOpacity = (progress * 0.8).clamp(0.0, 0.6);
+    final iconOpacity = (progress * 2.5).clamp(0.0, 1.0);
+
+    final bgColor = Color.lerp(
+      Colors.purple.shade50,
+      Colors.purple.shade300,
+      progress.clamp(0.0, 1.0),
+    )!;
+
+    return Dismissible(
+      key: Key(widget.compraDetalle.id!.toString()),
+      onUpdate: _onUpdate,
+      onDismissed: (_) => widget.onDismissed(),
+      background: Container(
+        color: bgColor.withValues(alpha: bgOpacity + 0.3),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        alignment: Alignment.centerLeft,
+        child: _buildAnimatedIcon(iconScale, iconOpacity),
+      ),
+      secondaryBackground: Container(
+        color: bgColor.withValues(alpha: bgOpacity + 0.3),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        alignment: Alignment.centerRight,
+        child: _buildAnimatedIcon(iconScale, iconOpacity),
+      ),
+      child: _ComprasDetalleRow(
+        compraDetalle: widget.compraDetalle,
+        index: widget.index,
+      ),
+    );
+  }
+
+  Widget _buildAnimatedIcon(double scale, double opacity) {
+    return AnimatedBuilder(
+      animation: _shakeAnimation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: opacity,
+          child: Transform.scale(
+            scale: scale,
+            child: Transform.rotate(
+              angle: _shakeAnimation.value,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

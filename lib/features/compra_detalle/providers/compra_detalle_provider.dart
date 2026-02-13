@@ -8,20 +8,21 @@ import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
 import 'package:smart_spend_app/domain/models/compra_model.dart';
 
 final compraDetalleProvider =
-    StateNotifierProvider<CompraDetalleNotifier, CompraDetalleState>(
-  (ref) {
-    final repository = ref.watch(compraRepositoryProvider);
-    final compra = ref.watch(homeProvider).selectedCompra;
-    return CompraDetalleNotifier(repository, compra!);
-  },
-);
+    NotifierProvider<CompraDetalleNotifier, CompraDetalleState>(
+      () => CompraDetalleNotifier(),
+    );
 
-class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
-  final CompraRepository _repository;
-  final CompraModel _compra;
+class CompraDetalleNotifier extends Notifier<CompraDetalleState> {
+  late final CompraRepository _repository;
+  late final CompraModel _compra;
 
-  CompraDetalleNotifier(this._repository, this._compra)
-      : super(CompraDetalleState());
+  @override
+  CompraDetalleState build() {
+    _repository = ref.watch(compraRepositoryProvider);
+    _compra = ref.watch(homeProvider).selectedCompra!;
+    return CompraDetalleState();
+  }
+
   GlobalKey? dialogAgregarDetalleKey;
 
   Future<void> initDatos() async {
@@ -58,7 +59,9 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   }
 
   Future<void> updateDetalle(
-      int index, CompraDetalleModel updatedDetalle) async {
+    int index,
+    CompraDetalleModel updatedDetalle,
+  ) async {
     final updated = await _repository.updateDetalle(updatedDetalle);
 
     if (updated) {
@@ -76,8 +79,9 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
 
   Future<void> showAddDetalleDialog({required BuildContext context}) {
     final TextEditingController nombreController = TextEditingController();
-    final TextEditingController precioController =
-        TextEditingController(text: '0.00');
+    final TextEditingController precioController = TextEditingController(
+      text: '0.00',
+    );
     final FocusNode nombreFocusNode = FocusNode();
     final FocusNode precioFocusNode = FocusNode();
 
@@ -131,10 +135,7 @@ class CompraDetalleNotifier extends StateNotifier<CompraDetalleState> {
   }
 
   void deselectAllDetalles() {
-    state = state.copyWith(
-      isDetallesSelected: false,
-      selectedDetalles: [],
-    );
+    state = state.copyWith(isDetallesSelected: false, selectedDetalles: []);
   }
 
   void toggleEditing() {
@@ -155,12 +156,13 @@ class CompraDetalleState {
   final bool isEditing;
   final bool isLoading;
 
-  CompraDetalleState(
-      {this.detalles = const [],
-      this.compraId = 0,
-      this.isEditing = false,
-      this.isLoading = true,
-      this.compra});
+  CompraDetalleState({
+    this.detalles = const [],
+    this.compraId = 0,
+    this.isEditing = false,
+    this.isLoading = true,
+    this.compra,
+  });
 
   CompraDetalleState copyWith({
     List<CompraDetalleModel>? detalles,
@@ -172,10 +174,11 @@ class CompraDetalleState {
     CompraModel? compra,
   }) {
     return CompraDetalleState(
-        detalles: detalles ?? this.detalles,
-        compraId: compraId ?? this.compraId,
-        isEditing: isEditing ?? this.isEditing,
-        isLoading: isLoading ?? this.isLoading,
-        compra: compra ?? this.compra);
+      detalles: detalles ?? this.detalles,
+      compraId: compraId ?? this.compraId,
+      isEditing: isEditing ?? this.isEditing,
+      isLoading: isLoading ?? this.isLoading,
+      compra: compra ?? this.compra,
+    );
   }
 }

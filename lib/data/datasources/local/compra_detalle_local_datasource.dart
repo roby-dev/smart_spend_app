@@ -20,15 +20,15 @@ class CompraDetalleLocalDataSourceImpl implements CompraDetalleLocalDataSource {
   Future<List<CompraDetalle>> getDetallesByCompraId(int compraId) async {
     return await (_database.select(_database.compraDetalles)
           ..where((tbl) => tbl.compra.equals(compraId))
-          ..orderBy([(t) => OrderingTerm.desc(t.fecha)]))
+          ..orderBy([(t) => OrderingTerm.asc(t.id)]))
         .get();
   }
 
   @override
   Future<CompraDetalle?> getDetalleById(int id) async {
-    return await (_database.select(_database.compraDetalles)
-          ..where((tbl) => tbl.id.equals(id)))
-        .getSingleOrNull();
+    return await (_database.select(
+      _database.compraDetalles,
+    )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
   }
 
   @override
@@ -49,9 +49,9 @@ class CompraDetalleLocalDataSourceImpl implements CompraDetalleLocalDataSource {
   @override
   Future<bool> deleteDetalle(int id) async {
     try {
-      final deleted = await (_database.delete(_database.compraDetalles)
-            ..where((tbl) => tbl.id.equals(id)))
-          .go();
+      final deleted = await (_database.delete(
+        _database.compraDetalles,
+      )..where((tbl) => tbl.id.equals(id))).go();
       return deleted > 0;
     } catch (e) {
       return false;
@@ -61,9 +61,9 @@ class CompraDetalleLocalDataSourceImpl implements CompraDetalleLocalDataSource {
   @override
   Future<bool> deleteDetallesByCompraId(int compraId) async {
     try {
-      await (_database.delete(_database.compraDetalles)
-            ..where((tbl) => tbl.compra.equals(compraId)))
-          .go();
+      await (_database.delete(
+        _database.compraDetalles,
+      )..where((tbl) => tbl.compra.equals(compraId))).go();
       return true;
     } catch (e) {
       return false;
