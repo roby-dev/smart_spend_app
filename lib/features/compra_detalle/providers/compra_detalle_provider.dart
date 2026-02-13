@@ -13,8 +13,8 @@ final compraDetalleProvider =
     );
 
 class CompraDetalleNotifier extends Notifier<CompraDetalleState> {
-  late final CompraRepository _repository;
-  late final CompraModel _compra;
+  late CompraRepository _repository;
+  late CompraModel _compra;
 
   @override
   CompraDetalleState build() {

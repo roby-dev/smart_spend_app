@@ -17,8 +17,8 @@ final homeProvider = NotifierProvider<HomeNotifier, HomeState>(
 );
 
 class HomeNotifier extends Notifier<HomeState> {
-  late final CompraRepository _repository;
-  late final AppDatabase _db;
+  late CompraRepository _repository;
+  late AppDatabase _db;
   GlobalKey? dialogAgregarCompraKey;
   final GoRouter router = appRouter;
 
