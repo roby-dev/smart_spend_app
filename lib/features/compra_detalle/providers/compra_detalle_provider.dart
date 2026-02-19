@@ -53,7 +53,8 @@ class CompraDetalleNotifier extends Notifier<CompraDetalleState> {
 
   Future<void> addDetalle(CompraDetalleModel detalle) async {
     final newDetalle = await _repository.addDetalle(detalle);
-    final updatedDetalles = [...state.detalles, newDetalle];
+    final updatedDetalles = [...state.detalles, newDetalle]
+      ..sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
 
     state = state.copyWith(detalles: updatedDetalles);
   }
