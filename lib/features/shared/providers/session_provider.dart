@@ -1,13 +1,12 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:googleapis_auth/auth_io.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/io_client.dart';
 import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
@@ -16,8 +15,6 @@ import 'package:smart_spend_app/main.dart';
 final sessionProvider = NotifierProvider<SessionNotifier, SessionState>(
   () => SessionNotifier(),
 );
-
-final FirebaseAuth _auth = FirebaseAuth.instance;
 
 class SessionNotifier extends Notifier<SessionState> {
   @override
@@ -184,27 +181,20 @@ class SessionNotifier extends Notifier<SessionState> {
 
   Future<void> signOut() async {
     await signOutGoogle();
-    state = state.copyWith(user: null);
+    state = state.copyWith(displayName: null, photoUrl: null);
   }
 
-  Future<User?> signInWithGoogle() async {
+  Future<GoogleSignInAccount?> signInWithGoogle() async {
     await _initializeGoogleSignIn();
     final GoogleSignInAccount? googleUser = await googleSignIn.authenticate();
     if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-
-    final credential = GoogleAuthProvider.credential(
-      idToken: googleAuth.idToken,
+    state = state.copyWith(
+      displayName: googleUser.displayName,
+      photoUrl: googleUser.photoUrl,
     );
 
-    final UserCredential userCredential = await _auth.signInWithCredential(
-      credential,
-    );
-    final User? user = userCredential.user;
-    state = state.copyWith(user: user);
-
-    return user;
+    return googleUser;
   }
 
   Future<void> signOutGoogle() async {
@@ -214,11 +204,15 @@ class SessionNotifier extends Notifier<SessionState> {
 }
 
 class SessionState {
-  User? user;
+  String? displayName;
+  String? photoUrl;
 
-  SessionState({this.user});
+  SessionState({this.displayName, this.photoUrl});
 
-  SessionState copyWith({User? user, GoogleSignInAccount? googleUser}) {
-    return SessionState(user: user);
+  SessionState copyWith({String? displayName, String? photoUrl}) {
+    return SessionState(
+      displayName: displayName ?? this.displayName,
+      photoUrl: photoUrl ?? this.photoUrl,
+    );
   }
 }

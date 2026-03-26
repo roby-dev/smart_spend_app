@@ -65,7 +65,7 @@ class Layout1State extends ConsumerState<Layout1> {
         onReordering: () async {
           ref.read(homeProvider.notifier).toggleReordering();
         },
-        user: ref.watch(sessionProvider).user,
+        photoUrl: ref.watch(sessionProvider).photoUrl,
       ),
       //drawer: const MyDrawer(),
       body: SafeArea(

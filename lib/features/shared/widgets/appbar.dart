@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 
@@ -19,7 +18,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback exportToJson;
   final VoidCallback signOut;
 
-  final User? user;
+  final String? photoUrl;
 
   const MyAppBar({
     super.key,
@@ -31,7 +30,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onReordering,
     required this.importFromJson,
     required this.exportToJson,
-    this.user,
+    this.photoUrl,
     required this.signOut,
     this.onArchive,
     this.onShareSelected,
@@ -39,8 +38,6 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? photoUrl = user?.photoURL;
-
     return AppBar(
       leading: showDeleteAction
           ? IconButton(
@@ -91,7 +88,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: photoUrl == null
                 ? const Icon(Icons.settings)
                 : CircleAvatar(
-                    backgroundImage: NetworkImage(photoUrl),
+                    backgroundImage: NetworkImage(photoUrl!),
                     radius: 15,
                   ),
             color: AppColors.gray100,
@@ -107,7 +104,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 value: 1,
                 child: Text('Importar compras'),
               ),
-              if (user != null)
+              if (photoUrl != null)
                 const PopupMenuItem<int>(
                   value: 2,
                   child: Text('Cerrar sesión'),

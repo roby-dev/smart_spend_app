@@ -1,4 +1,4 @@
-package com.example.smart_spend_app
+package com.devpro.app
 
 import io.flutter.embedding.android.FlutterActivity
 
