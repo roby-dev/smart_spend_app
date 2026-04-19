@@ -15,10 +15,12 @@ class MisComprasDetalle extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
       },
+      behavior: HitTestBehavior.translucent,
       child: compraDetalleState.isLoading
           ? ListView.separated(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               itemCount: 2, // Muestra 5 skeletons
               separatorBuilder: (context, index) => const Divider(
                 color: AppColors.gray100,
@@ -29,6 +31,7 @@ class MisComprasDetalle extends ConsumerWidget {
                   const ComprasDetalleRowSkeleton(),
             )
           : ListView.separated(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               itemCount: compraDetalleState.detalles.length,
               separatorBuilder: (context, index) => const Divider(
                 color: AppColors.gray100,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/features/compras_archivadas/provider/archivadas_provider.dart';
-import 'package:smart_spend_app/features/shared/providers/session_provider.dart';
 import 'package:smart_spend_app/features/shared/widgets/appbar.dart';
 import 'package:smart_spend_app/features/home/providers/home_provider.dart';
 
@@ -57,15 +56,11 @@ class Layout1State extends ConsumerState<Layout1> {
           await ref.read(homeProvider.notifier).shareJson(context);
         },
         importFromJson: () async {
-          await ref.read(sessionProvider.notifier).importFromDrive(context);
-        },
-        signOut: () async {
-          await ref.read(sessionProvider.notifier).signOut();
+          await ref.read(homeProvider.notifier).importFromJson(context);
         },
         onReordering: () async {
           ref.read(homeProvider.notifier).toggleReordering();
         },
-        photoUrl: ref.watch(sessionProvider).photoUrl,
       ),
       //drawer: const MyDrawer(),
       body: SafeArea(

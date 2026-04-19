@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/config/database/database_helper_drift.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import 'package:smart_spend_app/config/router/app_router.dart';
 import 'package:smart_spend_app/data/repositories/compra_repository_provider.dart';
 import 'package:smart_spend_app/domain/repositories/compra_repository.dart';
@@ -295,6 +297,56 @@ class HomeNotifier extends Notifier<HomeState> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error al compartir el archivo')),
       );
+    }
+  }
+  Future<void> importFromJson(BuildContext context) async {
+    try {
+      // Seleccionar archivo usando FilePicker
+      var filePickerResult = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (filePickerResult != null && filePickerResult.files.isNotEmpty) {
+        final filePath = filePickerResult.files.single.path;
+
+        if (filePath != null) {
+          // Leer el contenido del archivo JSON
+          String jsonString = await File(filePath).readAsString();
+
+          // Importar los datos usando Drift
+          await _db.importFromJson(jsonString);
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Datos importados exitosamente')),
+            );
+          }
+
+          loadCompras();
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No se pudo acceder al archivo seleccionado'),
+              ),
+            );
+          }
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se seleccionó ningún archivo')),
+          );
+        }
+      }
+    } catch (e) {
+      print("Error importing from file: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al importar el archivo')),
+        );
+      }
     }
   }
 }

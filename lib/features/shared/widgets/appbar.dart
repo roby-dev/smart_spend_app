@@ -16,9 +16,6 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onReordering;
   final VoidCallback importFromJson;
   final VoidCallback exportToJson;
-  final VoidCallback signOut;
-
-  final String? photoUrl;
 
   const MyAppBar({
     super.key,
@@ -30,8 +27,6 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onReordering,
     required this.importFromJson,
     required this.exportToJson,
-    this.photoUrl,
-    required this.signOut,
     this.onArchive,
     this.onShareSelected,
   });
@@ -79,18 +74,11 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 exportToJson();
               } else if (item == 1) {
                 importFromJson();
-              } else if (item == 2) {
-                signOut();
               } else if (item == 3) {
                 onReordering();
               }
             },
-            icon: photoUrl == null
-                ? const Icon(Icons.settings)
-                : CircleAvatar(
-                    backgroundImage: NetworkImage(photoUrl!),
-                    radius: 15,
-                  ),
+            icon: const Icon(Icons.settings),
             color: AppColors.gray100,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.0),
@@ -104,11 +92,6 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 value: 1,
                 child: Text('Importar compras'),
               ),
-              if (photoUrl != null)
-                const PopupMenuItem<int>(
-                  value: 2,
-                  child: Text('Cerrar sesión'),
-                ),
               PopupMenuItem<int>(
                 value: 3,
                 child: Text('Mover compras'),

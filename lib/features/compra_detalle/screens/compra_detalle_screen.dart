@@ -68,10 +68,26 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
     final restante = presupuesto != null ? presupuesto - total : null;
     final sobrepasado = restante != null && restante < 0;
 
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        child: Column(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final FocusScopeNode currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus && currentFocus.hasFocus) {
+          FocusManager.instance.primaryFocus?.unfocus();
+        } else {
+          Navigator.of(context).pop(result);
+        }
+      },
+      child: Scaffold(
+        body: GestureDetector(
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          behavior: HitTestBehavior.translucent,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -237,6 +253,7 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
           ],
         ),
       ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await ref
@@ -245,6 +262,7 @@ class CompraDetalleScreenState extends ConsumerState<CompraDetalleScreen> {
         },
         child: const Icon(Icons.add),
       ),
+    ),
     );
   }
 }
