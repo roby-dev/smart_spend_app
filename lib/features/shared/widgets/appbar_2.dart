@@ -19,17 +19,10 @@ class MyAppBar2 extends StatelessWidget implements PreferredSizeWidget {
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_outlined),
         onPressed: () {
-          final FocusScopeNode currentFocus = FocusScope.of(context);
-          // Si algún campo de texto (hijo) tiene el foco, escondemos el teclado
-          if (!currentFocus.hasPrimaryFocus && currentFocus.hasFocus) {
-            FocusManager.instance.primaryFocus?.unfocus();
+          if (onBack != null) {
+            onBack!();
           } else {
-            // Si el teclado no está abierto, retrocedemos de pantalla normalmente
-            if (onBack != null) {
-              onBack!();
-            } else {
-              context.pop();
-            }
+            context.pop();
           }
         },
         color: AppColors.gray700,
