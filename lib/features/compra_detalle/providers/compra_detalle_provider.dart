@@ -19,16 +19,17 @@ class CompraDetalleNotifier extends Notifier<CompraDetalleState> {
   @override
   CompraDetalleState build() {
     _repository = ref.watch(compraRepositoryProvider);
-    _compra = ref.watch(homeProvider).selectedCompra!;
     return CompraDetalleState();
   }
 
   GlobalKey? dialogAgregarDetalleKey;
 
   Future<void> initDatos() async {
+    final compra = ref.read(homeProvider).selectedCompra;
+    if (compra == null) return;
+    _compra = compra;
     state = state.copyWith(
       isEditing: false,
-      isDetallesSelected: false,
       detalles: _compra.detalles,
       isLoading: false,
       compra: _compra,
@@ -66,7 +67,10 @@ class CompraDetalleNotifier extends Notifier<CompraDetalleState> {
     final updated = await _repository.updateDetalle(updatedDetalle);
 
     if (updated) {
-      await loadCompraDetalles(updatedDetalle.compraId);
+      final updatedDetalles = List<CompraDetalleModel>.from(state.detalles);
+      final i = updatedDetalles.indexWhere((d) => d.id == updatedDetalle.id);
+      if (i != -1) updatedDetalles[i] = updatedDetalle;
+      state = state.copyWith(detalles: updatedDetalles);
     }
   }
 
@@ -128,8 +132,10 @@ class CompraDetalleNotifier extends Notifier<CompraDetalleState> {
   }
 
   Future<void> saveTitle({required String newTitle}) async {
-    if (newTitle.isNotEmpty && newTitle != _compra.titulo) {
-      final updatedCompra = state.compra!.copyWith(titulo: newTitle);
+    final current = state.compra;
+    if (current == null) return;
+    if (newTitle.isNotEmpty && newTitle != current.titulo) {
+      final updatedCompra = current.copyWith(titulo: newTitle);
       await _repository.updateCompra(updatedCompra);
       state = state.copyWith(compra: updatedCompra);
     }
@@ -144,7 +150,9 @@ class CompraDetalleNotifier extends Notifier<CompraDetalleState> {
   }
 
   Future<void> savePresupuesto(double? nuevoPresupuesto) async {
-    final updatedCompra = state.compra!.copyWith(presupuesto: nuevoPresupuesto);
+    final current = state.compra;
+    if (current == null) return;
+    final updatedCompra = current.copyWith(presupuesto: nuevoPresupuesto);
     await _repository.updateCompra(updatedCompra);
     state = state.copyWith(compra: updatedCompra);
   }
