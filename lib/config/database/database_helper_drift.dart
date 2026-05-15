@@ -82,6 +82,16 @@ extension DriftExportImport on AppDatabase {
   Future<void> importFromJson(String jsonString) async {
     final List<dynamic> decoded = jsonDecode(jsonString);
 
+    decoded.sort((a, b) =>
+        (a['fecha'] as String).compareTo(b['fecha'] as String));
+
+    final maxOrdenExpr = compras.orden.max();
+    final maxOrdenQuery = selectOnly(compras)..addColumns([maxOrdenExpr]);
+    final currentMax = await maxOrdenQuery
+        .map((row) => row.read(maxOrdenExpr))
+        .getSingleOrNull();
+    final baseOrden = (currentMax ?? -1) + 1;
+
     for (int i = 0; i < decoded.length; i++) {
       final compraMap = decoded[i];
       final compraId = await into(compras).insert(ComprasCompanion(
@@ -89,7 +99,7 @@ extension DriftExportImport on AppDatabase {
         fecha: Value(compraMap['fecha']),
         archivado: Value(compraMap['archivado'] ?? false), // por defecto
         presupuesto: Value(compraMap['presupuesto']), // no existía
-        orden: Value(i), // basado en posición
+        orden: Value(baseOrden + i), // detrás de lo existente, ordenado por fecha
       ));
 
       final detalles = compraMap['detalles'] as List<dynamic>;

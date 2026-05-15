@@ -94,9 +94,15 @@ class CompraRepositoryImpl implements CompraRepository {
 
   @override
   Future<CompraModel> createCompra(CompraModel compra) async {
-    final companion = _modelToCompanion(compra);
+    final maxOrdenExpr = _database.compras.orden.max();
+    final query = _database.selectOnly(_database.compras)
+      ..addColumns([maxOrdenExpr]);
+    final maxOrden = await query.map((row) => row.read(maxOrdenExpr)).getSingleOrNull();
+    final nextOrden = (maxOrden ?? -1) + 1;
+
+    final companion = _modelToCompanion(compra.copyWith(orden: nextOrden));
     final id = await _compraDataSource.insertCompra(companion);
-    return compra.copyWith(id: id);
+    return compra.copyWith(id: id, orden: nextOrden);
   }
 
   @override
@@ -144,7 +150,8 @@ class CompraRepositoryImpl implements CompraRepository {
     );
 
     return comprasWithDetails.map((cwd) {
-      final detalles = cwd.detalles.map(_detalleEntityToModel).toList();
+      final detalles = cwd.detalles.map(_detalleEntityToModel).toList()
+        ..sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
       return _entityToModel(cwd.compra, detalles: detalles);
     }).toList();
   }

@@ -103,9 +103,17 @@ class HomeNotifier extends Notifier<HomeState> {
     state = state.copyWith(selectedCompras: selectedCompras);
   }
 
+  Future<void> _deleteCompraNoReload(int compraId) async {
+    await _repository.deleteCompra(compraId);
+  }
+
+  Future<void> _archiveCompraNoReload(int compraId) async {
+    await _repository.archiveCompra(compraId);
+  }
+
   Future<void> deleteSelectedCompras() async {
     for (var compraId in state.selectedCompras) {
-      await deleteCompra(compraId);
+      await _deleteCompraNoReload(compraId);
     }
     toggleComprasSelection();
     await loadCompras();
@@ -176,7 +184,7 @@ class HomeNotifier extends Notifier<HomeState> {
           titulo: title,
           presupuesto: presupuesto,
         );
-        homeNotifier.saveCompra(updatedCompra, []);
+        homeNotifier.updateCompra(updatedCompra);
       } else {
         final nuevaCompra = CompraModel(
           titulo: title,
@@ -239,7 +247,7 @@ class HomeNotifier extends Notifier<HomeState> {
 
   Future<void> archiveSelectedCompras() async {
     for (var compraId in state.selectedCompras) {
-      await archiveCompra(compraId);
+      await _archiveCompraNoReload(compraId);
     }
     toggleComprasSelection();
     await loadCompras();
@@ -265,9 +273,13 @@ class HomeNotifier extends Notifier<HomeState> {
   }
 
   Future<void> updateOrdenCompras(List<CompraModel> nuevasCompras) async {
-    await _repository.updateComprasOrder(nuevasCompras);
+    final reordenadas = [
+      for (int i = 0; i < nuevasCompras.length; i++)
+        nuevasCompras[i].copyWith(orden: i),
+    ];
+    state = state.copyWith(compras: reordenadas);
 
-    await loadCompras();
+    await _repository.updateComprasOrder(reordenadas);
   }
 
   void toggleReordering() {

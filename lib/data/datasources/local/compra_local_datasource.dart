@@ -120,7 +120,10 @@ class CompraLocalDataSourceImpl implements CompraLocalDataSource {
       query.where(_database.compras.archivado.equals(false));
     }
 
-    query.orderBy([OrderingTerm.asc(_database.compras.orden)]);
+    query.orderBy([
+      OrderingTerm.asc(_database.compras.orden),
+      OrderingTerm.asc(_database.compraDetalles.id),
+    ]);
 
     final rows = await query.get();
 

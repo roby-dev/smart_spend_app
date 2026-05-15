@@ -49,9 +49,19 @@ class ArchivadasNotifier extends Notifier<ArchivadasState> {
   }
 
   Future<void> restoreSelected(List<int> selectedIds) async {
+    final maxOrdenExpr = _db.compras.orden.max();
+    final query = _db.selectOnly(_db.compras)..addColumns([maxOrdenExpr]);
+    final currentMax =
+        await query.map((row) => row.read(maxOrdenExpr)).getSingleOrNull();
+    var nextOrden = (currentMax ?? -1) + 1;
+
     for (final id in selectedIds) {
       await (_db.update(_db.compras)..where((tbl) => tbl.id.equals(id)))
-          .write(const ComprasCompanion(archivado: Value(false)));
+          .write(ComprasCompanion(
+        archivado: const Value(false),
+        orden: Value(nextOrden),
+      ));
+      nextOrden++;
     }
 
     await loadArchivadas();
