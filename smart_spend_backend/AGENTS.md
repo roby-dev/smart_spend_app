@@ -79,10 +79,15 @@ pnpm run lint        # ESLint + Prettier
 ```
 JWT_SECRET=<min 16 chars>
 JWT_EXPIRY=15m
-GOOGLE_CLIENT_ID=<google-oauth-client-id>
+GOOGLE_CLIENT_ID=<google-oauth-client-id>   # Web Client ID; debe coincidir con el serverClientId del front
+MONGODB_URI=<mongodb-atlas-connection-string>
+
+# Apple Sign-In — OPCIONAL (requiere Apple Developer Program pago).
+# Si se omiten, el backend arranca igual y solo se deshabilita el login con Apple.
 APPLE_CLIENT_ID=<app-bundle-id>
 APPLE_TEAM_ID=<apple-team-id>
 APPLE_KEY_ID=<apple-key-id>
 APPLE_PRIVATE_KEY=<p8-file-contents>
-MONGODB_URI=<mongodb-atlas-connection-string>
 ```
+
+> Nota: no setear `PORT` en Railway (lo inyecta la plataforma).

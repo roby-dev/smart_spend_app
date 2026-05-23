@@ -33,9 +33,11 @@ export const envValidationSchema = Joi.object({
   JWT_SECRET: Joi.string().required().min(16),
   JWT_EXPIRY: Joi.string().default('15m'),
   GOOGLE_CLIENT_ID: Joi.string().required(),
-  APPLE_TEAM_ID: Joi.string().required(),
-  APPLE_KEY_ID: Joi.string().required(),
-  APPLE_PRIVATE_KEY: Joi.string().required(),
-  APPLE_CLIENT_ID: Joi.string().required(),
+  // Apple Sign-In es opcional (requiere el Apple Developer Program pago).
+  // Sin estas vars el backend arranca igual; solo se deshabilita el login con Apple.
+  APPLE_TEAM_ID: Joi.string().optional(),
+  APPLE_KEY_ID: Joi.string().optional(),
+  APPLE_PRIVATE_KEY: Joi.string().optional(),
+  APPLE_CLIENT_ID: Joi.string().optional(),
   MONGODB_URI: Joi.string().required().uri(),
 });
