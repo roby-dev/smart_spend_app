@@ -13,7 +13,7 @@ class AppEnv {
 
   static const String backendBaseUrl = String.fromEnvironment(
     'BACKEND_BASE_URL',
-    defaultValue: 'https://CHANGE_ME.up.railway.app',
+    defaultValue: 'https://smartspendapp-production.up.railway.app',
   );
 
   static const String googleServerClientId = String.fromEnvironment(

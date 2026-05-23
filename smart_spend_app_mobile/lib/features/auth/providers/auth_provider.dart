@@ -3,17 +3,30 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:smart_spend_app/config/env/app_env.dart';
 import 'package:smart_spend_app/features/auth/data/auth_remote_datasource.dart';
 import 'package:smart_spend_app/features/auth/data/token_storage.dart';
+import 'package:smart_spend_app/features/auth/domain/user_profile.dart';
 
 enum AuthStatus { signedOut, signingIn, signedIn, error }
 
 class AuthState {
   final AuthStatus status;
   final String? error;
+  final UserProfile? profile;
 
-  const AuthState({this.status = AuthStatus.signedOut, this.error});
+  const AuthState({
+    this.status = AuthStatus.signedOut,
+    this.error,
+    this.profile,
+  });
 
-  AuthState copyWith({AuthStatus? status, String? error}) =>
-      AuthState(status: status ?? this.status, error: error);
+  AuthState copyWith({
+    AuthStatus? status,
+    String? error,
+    UserProfile? profile,
+  }) => AuthState(
+    status: status ?? this.status,
+    error: error,
+    profile: profile ?? this.profile,
+  );
 }
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(
@@ -30,7 +43,15 @@ class AuthNotifier extends Notifier<AuthState> {
   AuthState build() {
     _remote = ref.watch(authRemoteDatasourceProvider);
     _storage = ref.watch(tokenStorageProvider);
+    _restore();
     return const AuthState();
+  }
+
+  /// Restores a persisted session (tokens + profile) on startup.
+  Future<void> _restore() async {
+    if (await _storage.read() == null) return;
+    final profile = await _storage.readProfile();
+    state = state.copyWith(status: AuthStatus.signedIn, profile: profile);
   }
 
   Future<bool> hasSession() async {
@@ -52,26 +73,30 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final signIn = GoogleSignIn.instance;
       if (!_googleInitialized) {
-        await signIn.initialize(
-          serverClientId: AppEnv.googleServerClientId,
-        );
+        await signIn.initialize(serverClientId: AppEnv.googleServerClientId);
         _googleInitialized = true;
       }
 
       final account = await signIn.authenticate();
       final idToken = account.authentication.idToken;
       if (idToken == null) {
-        state =
-            state.copyWith(status: AuthStatus.error, error: 'No idToken');
+        state = state.copyWith(status: AuthStatus.error, error: 'No idToken');
         return false;
       }
 
       final tokens = await _remote.loginWithGoogle(idToken);
       await _storage.save(tokens);
-      state = state.copyWith(status: AuthStatus.signedIn);
+
+      final profile = UserProfile(
+        name: account.displayName,
+        email: account.email,
+        photoUrl: account.photoUrl,
+      );
+      await _storage.saveProfile(profile);
+
+      state = state.copyWith(status: AuthStatus.signedIn, profile: profile);
       return true;
     } on GoogleSignInException catch (e) {
-      // User canceled or platform error.
       final canceled = e.code == GoogleSignInExceptionCode.canceled;
       state = state.copyWith(
         status: canceled ? AuthStatus.signedOut : AuthStatus.error,
@@ -100,6 +125,6 @@ class AuthNotifier extends Notifier<AuthState> {
       await GoogleSignIn.instance.signOut();
     } catch (_) {}
     await _storage.clear();
-    state = state.copyWith(status: AuthStatus.signedOut, error: null);
+    state = const AuthState(status: AuthStatus.signedOut);
   }
 }

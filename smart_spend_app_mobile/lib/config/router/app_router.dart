@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smart_spend_app/features/compra_detalle/routes/compra_detalle_router.dart';
 import 'package:smart_spend_app/features/compras_archivadas/routes/archivadas_router.dart';
 import 'package:smart_spend_app/features/home/routes/home_router.dart';
+import 'package:smart_spend_app/features/profile/screens/profile_screen.dart';
 import 'package:smart_spend_app/features/shared/layouts/bottom_nav_1.dart';
 import 'package:smart_spend_app/features/shared/layouts/layout_2.dart';
 
@@ -19,17 +20,18 @@ final appRouter = GoRouter(
   routes: <RouteBase>[
     ShellRoute(
       builder: (context, state, child) => BottomNavLayout1(child: child),
-      routes: [
-        homeRouter,
-        archivadasRouter,
-      ],
+      routes: [homeRouter, archivadasRouter],
     ),
     ShellRoute(
       builder: (context, state, child) => Layout2(child: child),
-      routes: [
-        compraDetalleRouter,
-      ],
+      routes: [compraDetalleRouter],
       navigatorKey: mainShellNavigatorKey,
+    ),
+    GoRoute(
+      path: '/profile',
+      pageBuilder: defaultPageBuilder(
+        child: const Layout2(child: ProfileScreen()),
+      ),
     ),
   ],
 );
@@ -45,8 +47,9 @@ CustomTransitionPage<T> transition<T>({
   final isForward = _isForwardTransition(_lastLocation, current);
   _lastLocation = current;
 
-  final beginOffset =
-      isForward ? const Offset(1.0, 0.0) : const Offset(-1.0, 0.0);
+  final beginOffset = isForward
+      ? const Offset(1.0, 0.0)
+      : const Offset(-1.0, 0.0);
 
   return CustomTransitionPage<T>(
     key: state.pageKey,
@@ -84,11 +87,6 @@ bool _isForwardTransition(String from, String to) {
 Page<dynamic> Function(BuildContext, GoRouterState) defaultPageBuilder<T>({
   required Widget child,
   Brightness? brightness,
-}) =>
-    (BuildContext context, GoRouterState state) {
-      return transition<T>(
-        context: context,
-        state: state,
-        child: child,
-      );
-    };
+}) => (BuildContext context, GoRouterState state) {
+  return transition<T>(context: context, state: state, child: child);
+};
