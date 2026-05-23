@@ -26,18 +26,21 @@ export const mongoConfig = registerAs('mongo', () => ({
 }));
 
 export const envValidationSchema = Joi.object({
+  // .empty('') treats an empty-string env var (which Railway can inject) as
+  // unset so the .default() applies, instead of failing validation.
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
+    .empty('')
     .default('development'),
-  PORT: Joi.number().default(3000),
+  PORT: Joi.number().empty('').default(3000),
   JWT_SECRET: Joi.string().required().min(16),
-  JWT_EXPIRY: Joi.string().default('15m'),
+  JWT_EXPIRY: Joi.string().empty('').default('15m'),
   GOOGLE_CLIENT_ID: Joi.string().required(),
   // Apple Sign-In es opcional (requiere el Apple Developer Program pago).
   // Sin estas vars el backend arranca igual; solo se deshabilita el login con Apple.
-  APPLE_TEAM_ID: Joi.string().optional(),
-  APPLE_KEY_ID: Joi.string().optional(),
-  APPLE_PRIVATE_KEY: Joi.string().optional(),
-  APPLE_CLIENT_ID: Joi.string().optional(),
+  APPLE_TEAM_ID: Joi.string().empty('').optional(),
+  APPLE_KEY_ID: Joi.string().empty('').optional(),
+  APPLE_PRIVATE_KEY: Joi.string().empty('').optional(),
+  APPLE_CLIENT_ID: Joi.string().empty('').optional(),
   MONGODB_URI: Joi.string().required().uri(),
 });
