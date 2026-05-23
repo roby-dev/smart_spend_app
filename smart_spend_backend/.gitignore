@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# pnpm 11 auto-generates this locally (build-script approval). It uses pnpm-11
+# syntax (allowBuilds) that breaks Railway's pnpm-9 install, so keep it local-only.
+pnpm-workspace.yaml
+
 # Build output
 dist/
 build/
