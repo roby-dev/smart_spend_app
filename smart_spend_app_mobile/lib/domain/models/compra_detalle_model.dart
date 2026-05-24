@@ -1,5 +1,6 @@
 class CompraDetalleModel {
   final int? id;
+  final String? uuid;
   final String nombre;
   final double precio;
   final int compraId;
@@ -7,6 +8,7 @@ class CompraDetalleModel {
 
   CompraDetalleModel(
       {this.id,
+      this.uuid,
       required this.nombre,
       required this.precio,
       required this.compraId,
@@ -14,6 +16,7 @@ class CompraDetalleModel {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'uuid': uuid,
         'nombre': nombre,
         'precio': precio,
         'compra_id': compraId,
@@ -23,6 +26,7 @@ class CompraDetalleModel {
   factory CompraDetalleModel.fromJson(Map<String, dynamic> json) =>
       CompraDetalleModel(
         id: json['id'],
+        uuid: json['uuid'],
         nombre: json['nombre'],
         precio: json['precio'],
         compraId: json['compra_id'],
@@ -31,12 +35,14 @@ class CompraDetalleModel {
 
   CompraDetalleModel copyWith(
       {int? id,
+      String? uuid,
       String? nombre,
       double? precio,
       int? compraId,
       DateTime? fecha}) {
     return CompraDetalleModel(
         id: id ?? this.id,
+        uuid: uuid ?? this.uuid,
         nombre: nombre ?? this.nombre,
         precio: precio ?? this.precio,
         compraId: compraId ?? this.compraId,

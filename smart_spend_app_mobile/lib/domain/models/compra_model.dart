@@ -2,6 +2,7 @@ import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
 
 class CompraModel {
   final int? id;
+  final String? uuid;
   final String titulo;
   final DateTime fecha;
   List<CompraDetalleModel> detalles;
@@ -11,6 +12,7 @@ class CompraModel {
 
   CompraModel({
     this.id,
+    this.uuid,
     required this.titulo,
     required this.fecha,
     this.detalles = const [],
@@ -21,6 +23,7 @@ class CompraModel {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'uuid': uuid,
         'titulo': titulo,
         'fecha': fecha.toIso8601String(),
         'archivado': archivado,
@@ -31,6 +34,7 @@ class CompraModel {
   Map<String, dynamic> toJsonExport() {
     return {
       'id': id,
+      'uuid': uuid,
       'titulo': titulo,
       'fecha': fecha.toIso8601String(),
       'archivado': archivado,
@@ -42,6 +46,7 @@ class CompraModel {
 
   factory CompraModel.fromJson(Map<String, dynamic> json) => CompraModel(
         id: json['id'],
+        uuid: json['uuid'],
         titulo: json['titulo'],
         fecha: DateTime.parse(json['fecha']),
         archivado: json['archivado'] ?? false,
@@ -51,6 +56,7 @@ class CompraModel {
 
   CompraModel copyWith({
     int? id,
+    String? uuid,
     String? titulo,
     DateTime? fecha,
     List<CompraDetalleModel>? detalles,
@@ -60,6 +66,7 @@ class CompraModel {
   }) {
     return CompraModel(
       id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       titulo: titulo ?? this.titulo,
       fecha: fecha ?? this.fecha,
       detalles: detalles ?? this.detalles,

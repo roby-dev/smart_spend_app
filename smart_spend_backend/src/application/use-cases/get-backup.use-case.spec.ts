@@ -7,6 +7,9 @@ function makeRepo(): jest.Mocked<IBackupRepository> {
   return {
     upsertByUserId: jest.fn(),
     findByUserId: jest.fn(),
+    createSnapshot: jest.fn(),
+    findSnapshotsByUserId: jest.fn(),
+    findSnapshotById: jest.fn(),
   };
 }
 

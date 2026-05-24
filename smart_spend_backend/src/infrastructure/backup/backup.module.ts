@@ -7,13 +7,25 @@ import {
   BackupSchema,
   BackupMongooseSchema,
 } from '../persistence/schemas/backup.schema';
-import { SaveBackupUseCase, GetBackupUseCase } from '../../application';
+import {
+  BackupSnapshotSchema,
+  BackupSnapshotMongooseSchema,
+} from '../persistence/schemas/backup-snapshot.schema';
+import {
+  SaveBackupUseCase,
+  GetBackupUseCase,
+  CreateBackupSnapshotUseCase,
+  GetBackupHistoryUseCase,
+  GetBackupSnapshotUseCase,
+  RestoreBackupSnapshotUseCase,
+} from '../../application';
 
 @Module({
   imports: [
     AuthModule,
     MongooseModule.forFeature([
       { name: BackupSchema.name, schema: BackupMongooseSchema },
+      { name: BackupSnapshotSchema.name, schema: BackupSnapshotMongooseSchema },
     ]),
   ],
   controllers: [BackupController],
@@ -29,6 +41,30 @@ import { SaveBackupUseCase, GetBackupUseCase } from '../../application';
       provide: GetBackupUseCase,
       useFactory: (backupRepo: MongoBackupRepository) =>
         new GetBackupUseCase(backupRepo),
+      inject: [MongoBackupRepository],
+    },
+    {
+      provide: CreateBackupSnapshotUseCase,
+      useFactory: (backupRepo: MongoBackupRepository) =>
+        new CreateBackupSnapshotUseCase(backupRepo),
+      inject: [MongoBackupRepository],
+    },
+    {
+      provide: GetBackupHistoryUseCase,
+      useFactory: (backupRepo: MongoBackupRepository) =>
+        new GetBackupHistoryUseCase(backupRepo),
+      inject: [MongoBackupRepository],
+    },
+    {
+      provide: GetBackupSnapshotUseCase,
+      useFactory: (backupRepo: MongoBackupRepository) =>
+        new GetBackupSnapshotUseCase(backupRepo),
+      inject: [MongoBackupRepository],
+    },
+    {
+      provide: RestoreBackupSnapshotUseCase,
+      useFactory: (backupRepo: MongoBackupRepository) =>
+        new RestoreBackupSnapshotUseCase(backupRepo),
       inject: [MongoBackupRepository],
     },
   ],

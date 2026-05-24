@@ -5,6 +5,7 @@ import 'package:smart_spend_app/data/datasources/local/compra_detalle_local_data
 import 'package:smart_spend_app/domain/models/compra_model.dart';
 import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
 import 'package:smart_spend_app/domain/repositories/compra_repository.dart';
+import 'package:uuid/uuid.dart';
 
 class CompraRepositoryImpl implements CompraRepository {
   final CompraLocalDataSource _compraDataSource;
@@ -25,6 +26,7 @@ class CompraRepositoryImpl implements CompraRepository {
       {List<CompraDetalleModel>? detalles}) {
     return CompraModel(
       id: entity.id,
+      uuid: entity.uuid,
       titulo: entity.titulo,
       fecha: DateTime.parse(entity.fecha),
       archivado: entity.archivado,
@@ -37,6 +39,7 @@ class CompraRepositoryImpl implements CompraRepository {
   CompraDetalleModel _detalleEntityToModel(CompraDetalle entity) {
     return CompraDetalleModel(
       id: entity.id,
+      uuid: entity.uuid,
       nombre: entity.nombre,
       precio: entity.precio,
       compraId: entity.compra,
@@ -47,6 +50,7 @@ class CompraRepositoryImpl implements CompraRepository {
   ComprasCompanion _modelToCompanion(CompraModel model) {
     return ComprasCompanion(
       id: model.id != null ? Value(model.id!) : const Value.absent(),
+      uuid: Value(model.uuid),
       titulo: Value(model.titulo),
       fecha: Value(model.fecha.toIso8601String()),
       archivado: Value(model.archivado),
@@ -58,6 +62,7 @@ class CompraRepositoryImpl implements CompraRepository {
   CompraDetallesCompanion _detalleModelToCompanion(CompraDetalleModel model) {
     return CompraDetallesCompanion(
       id: model.id != null ? Value(model.id!) : const Value.absent(),
+      uuid: Value(model.uuid),
       nombre: Value(model.nombre),
       precio: Value(model.precio),
       compra: Value(model.compraId),
@@ -100,14 +105,21 @@ class CompraRepositoryImpl implements CompraRepository {
     final maxOrden = await query.map((row) => row.read(maxOrdenExpr)).getSingleOrNull();
     final nextOrden = (maxOrden ?? -1) + 1;
 
-    final companion = _modelToCompanion(compra.copyWith(orden: nextOrden));
+    final compraWithUuid = compra.uuid == null || compra.uuid!.isEmpty
+        ? compra.copyWith(uuid: const Uuid().v7())
+        : compra;
+
+    final companion = _modelToCompanion(compraWithUuid.copyWith(orden: nextOrden));
     final id = await _compraDataSource.insertCompra(companion);
-    return compra.copyWith(id: id, orden: nextOrden);
+    return compraWithUuid.copyWith(id: id, orden: nextOrden);
   }
 
   @override
   Future<bool> updateCompra(CompraModel compra) async {
-    final companion = _modelToCompanion(compra);
+    final compraWithUuid = compra.uuid == null || compra.uuid!.isEmpty
+        ? compra.copyWith(uuid: const Uuid().v7())
+        : compra;
+    final companion = _modelToCompanion(compraWithUuid);
     return await _compraDataSource.updateCompra(companion);
   }
 
@@ -175,14 +187,20 @@ class CompraRepositoryImpl implements CompraRepository {
 
   @override
   Future<CompraDetalleModel> addDetalle(CompraDetalleModel detalle) async {
-    final companion = _detalleModelToCompanion(detalle);
+    final detalleWithUuid = detalle.uuid == null || detalle.uuid!.isEmpty
+        ? detalle.copyWith(uuid: const Uuid().v7())
+        : detalle;
+    final companion = _detalleModelToCompanion(detalleWithUuid);
     final id = await _detalleDataSource.insertDetalle(companion);
-    return detalle.copyWith(id: id);
+    return detalleWithUuid.copyWith(id: id);
   }
 
   @override
   Future<bool> updateDetalle(CompraDetalleModel detalle) async {
-    final companion = _detalleModelToCompanion(detalle);
+    final detalleWithUuid = detalle.uuid == null || detalle.uuid!.isEmpty
+        ? detalle.copyWith(uuid: const Uuid().v7())
+        : detalle;
+    final companion = _detalleModelToCompanion(detalleWithUuid);
     return await _detalleDataSource.updateDetalle(companion);
   }
 
@@ -194,6 +212,20 @@ class CompraRepositoryImpl implements CompraRepository {
   @override
   Future<double> getTotalGastado(int compraId) async {
     return await _detalleDataSource.getTotalByCompraId(compraId);
+  }
+
+  @override
+  Future<CompraModel?> findCompraByUuid(String uuid) async {
+    final entity = await _compraDataSource.findCompraByUuid(uuid);
+    if (entity == null) return null;
+    return _entityToModel(entity);
+  }
+
+  @override
+  Future<CompraDetalleModel?> findDetalleByUuid(String uuid) async {
+    final entity = await _detalleDataSource.findDetalleByUuid(uuid);
+    if (entity == null) return null;
+    return _detalleEntityToModel(entity);
   }
 
   @override

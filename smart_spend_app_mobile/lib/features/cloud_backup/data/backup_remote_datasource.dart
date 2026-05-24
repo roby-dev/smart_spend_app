@@ -25,6 +25,35 @@ class BackupRemoteDatasource {
       rethrow;
     }
   }
+
+  /// Returns the list of backup snapshots for the current user.
+  Future<List<dynamic>> getBackupHistory() async {
+    final res = await _dio.get<List<dynamic>>('/backup/history');
+    return res.data ?? [];
+  }
+
+  /// Returns a specific backup snapshot by id.
+  Future<Map<String, dynamic>?> getBackupById(String id) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>('/backup/$id');
+      return res.data;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  /// Restores a backup snapshot. Optionally pass a list of compra UUIDs
+  /// for selective restore.
+  Future<List<dynamic>> restoreBackup(String id, {List<String>? uuids}) async {
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/backup/$id/restore',
+      data: uuids != null && uuids.isNotEmpty
+          ? {'comprasUuids': uuids}
+          : {},
+    );
+    return res.data?['compras'] as List<dynamic>? ?? [];
+  }
 }
 
 final backupRemoteDatasourceProvider = Provider<BackupRemoteDatasource>((ref) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smart_spend_app/features/cloud_backup/screens/backup_history_screen.dart';
+import 'package:smart_spend_app/features/cloud_backup/screens/selective_restore_screen.dart';
 import 'package:smart_spend_app/features/compra_detalle/routes/compra_detalle_router.dart';
 import 'package:smart_spend_app/features/compras_archivadas/routes/archivadas_router.dart';
 import 'package:smart_spend_app/features/home/routes/home_router.dart';
@@ -32,6 +34,27 @@ final appRouter = GoRouter(
       pageBuilder: defaultPageBuilder(
         child: const Layout2(child: ProfileScreen()),
       ),
+    ),
+    GoRoute(
+      path: '/backup-history',
+      pageBuilder: defaultPageBuilder(
+        child: const Layout2(child: BackupHistoryScreen()),
+      ),
+    ),
+    GoRoute(
+      path: '/selective-restore',
+      pageBuilder: (context, state) {
+        final snapshot = state.extra as Map<String, dynamic>?;
+        return transition<dynamic>(
+          context: context,
+          state: state,
+          child: Layout2(
+            child: snapshot != null
+                ? SelectiveRestoreScreen(snapshot: snapshot)
+                : const Center(child: Text('No se proporcionó backup')),
+          ),
+        );
+      },
     ),
   ],
 );

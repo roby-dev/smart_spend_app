@@ -26,6 +26,10 @@ abstract class CompraRepository {
   Future<bool> deleteDetalle(int id);
   Future<double> getTotalGastado(int compraId);
 
+  // Operaciones de búsqueda por UUID
+  Future<CompraModel?> findCompraByUuid(String uuid);
+  Future<CompraDetalleModel?> findDetalleByUuid(String uuid);
+
   // Operaciones de Exportación/Importación
   Future<String> exportToJson();
   Future<bool> importFromJson(String jsonString);

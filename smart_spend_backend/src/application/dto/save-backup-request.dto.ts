@@ -10,6 +10,10 @@ import {
 } from 'class-validator';
 
 export class CompraDetalleDto {
+  @IsOptional()
+  @IsString()
+  uuid?: string;
+
   @IsString()
   nombre: string;
 
@@ -21,6 +25,10 @@ export class CompraDetalleDto {
 }
 
 export class CompraDto {
+  @IsOptional()
+  @IsString()
+  uuid?: string;
+
   @IsString()
   titulo: string;
 

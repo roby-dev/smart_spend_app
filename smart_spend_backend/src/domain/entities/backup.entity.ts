@@ -2,6 +2,7 @@ export interface CompraDetalleData {
   nombre: string;
   precio: number;
   fecha: string;
+  uuid?: string;
 }
 
 export interface CompraData {
@@ -10,6 +11,7 @@ export interface CompraData {
   archivado: boolean;
   presupuesto: number | null;
   orden: number;
+  uuid?: string;
   detalles: CompraDetalleData[];
 }
 

@@ -6,6 +6,7 @@ abstract class CompraLocalDataSource {
   Future<List<Compra>> getActiveCompras();
   Future<List<Compra>> getArchivedCompras();
   Future<Compra?> getCompraById(int id);
+  Future<Compra?> findCompraByUuid(String uuid);
   Future<int> insertCompra(ComprasCompanion compra);
   Future<bool> updateCompra(ComprasCompanion compra);
   Future<bool> deleteCompra(int id);
@@ -45,6 +46,13 @@ class CompraLocalDataSourceImpl implements CompraLocalDataSource {
   Future<Compra?> getCompraById(int id) async {
     return await (_database.select(_database.compras)
           ..where((tbl) => tbl.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  @override
+  Future<Compra?> findCompraByUuid(String uuid) async {
+    return await (_database.select(_database.compras)
+          ..where((tbl) => tbl.uuid.equals(uuid)))
         .getSingleOrNull();
   }
 

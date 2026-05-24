@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { Model } from 'mongoose';
 import request from 'supertest';
 import { AuthModule } from '../auth/auth.module';
 import { BackupModule } from './backup.module';
@@ -15,6 +16,12 @@ import {
   appleConfig,
   mongoConfig,
 } from '../../config/app.config';
+import { BackupDocument, BackupSchema } from '../persistence/schemas/backup.schema';
+import {
+  BackupSnapshotDocument,
+  BackupSnapshotSchema,
+} from '../persistence/schemas/backup-snapshot.schema';
+import { UserDocument, UserSchema } from '../persistence/schemas/user.schema';
 
 const sampleCompras = [
   {
@@ -23,9 +30,10 @@ const sampleCompras = [
     archivado: false,
     presupuesto: null,
     orden: 0,
+    uuid: 'compra-uuid-1',
     detalles: [
-      { nombre: 'Pollo', precio: 12.5, fecha: '2026-03-05T21:57:56.829Z' },
-      { nombre: 'Lechuga', precio: 3, fecha: '2026-03-29T08:45:25.827Z' },
+      { nombre: 'Pollo', precio: 12.5, fecha: '2026-03-05T21:57:56.829Z', uuid: 'det-uuid-1' },
+      { nombre: 'Lechuga', precio: 3, fecha: '2026-03-29T08:45:25.827Z', uuid: 'det-uuid-2' },
     ],
   },
   {
@@ -34,6 +42,7 @@ const sampleCompras = [
     archivado: true,
     presupuesto: 100,
     orden: 1,
+    uuid: 'compra-uuid-2',
     detalles: [],
   },
 ];
@@ -190,6 +199,39 @@ describe('BackupController (Integration)', () => {
         .send({})
         .expect(400);
     });
+
+    it('B10: POST /backup dual-write → writes to old backups AND backup_snapshots', async () => {
+      const providerId = 'g-dual-1';
+      const { accessToken } = await loginAndGetTokens(providerId, 'dual1@test.com');
+
+      await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: sampleCompras })
+        .expect(200);
+
+      const userModel = app.get<Model<UserDocument>>(
+        getModelToken(UserSchema.name),
+      );
+      const user = await userModel.findOne({ providerId });
+      expect(user).not.toBeNull();
+      const userId = user!._id.toString();
+
+      const backupModel = app.get<Model<BackupDocument>>(
+        getModelToken(BackupSchema.name),
+      );
+      const snapshotModel = app.get<Model<BackupSnapshotDocument>>(
+        getModelToken(BackupSnapshotSchema.name),
+      );
+
+      const oldBackup = await backupModel.findOne({ userId });
+      const snapshots = await snapshotModel.find({ userId });
+
+      expect(oldBackup).not.toBeNull();
+      expect(oldBackup!.compras).toHaveLength(2);
+      expect(snapshots).toHaveLength(1);
+      expect(snapshots[0].compras).toHaveLength(2);
+    });
   });
 
   describe('GET /backup', () => {
@@ -240,6 +282,250 @@ describe('BackupController (Integration)', () => {
         .get('/backup')
         .set('Authorization', `Bearer ${userB.accessToken}`)
         .expect(404);
+    });
+
+    it('B11: GET /backup falls back to old collection when no snapshots exist', async () => {
+      const providerId = 'g-fallback-1';
+      const { accessToken } = await loginAndGetTokens(providerId, 'fallback1@test.com');
+
+      const userModel = app.get<Model<UserDocument>>(
+        getModelToken(UserSchema.name),
+      );
+      const user = await userModel.findOne({ providerId });
+      expect(user).not.toBeNull();
+      const userId = user!._id.toString();
+
+      const backupModel = app.get<Model<BackupDocument>>(
+        getModelToken(BackupSchema.name),
+      );
+
+      // Directly insert into old backups collection (simulate pre-migration state)
+      await backupModel.create({
+        userId: userId,
+        compras: sampleCompras,
+      });
+
+      // No snapshots were created, so GET should fall back to old collection
+      const res = await request(app.getHttpServer())
+        .get('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.compras).toHaveLength(2);
+      expect(res.body.compras[0].titulo).toBe('Mercado');
+    });
+  });
+
+  describe('GET /backup/history', () => {
+    it('H1: no snapshots → 200 with empty array', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-hist-1',
+        'hist1@test.com',
+      );
+
+      const res = await request(app.getHttpServer())
+        .get('/backup/history')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body).toEqual([]);
+    });
+
+    it('H2: after POST → lists snapshots with compraCount', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-hist-2',
+        'hist2@test.com',
+      );
+
+      await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: sampleCompras })
+        .expect(200);
+
+      const res = await request(app.getHttpServer())
+        .get('/backup/history')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].compraCount).toBe(2);
+      expect(typeof res.body[0].id).toBe('string');
+      expect(typeof res.body[0].createdAt).toBe('string');
+    });
+
+    it('H3: multiple POSTs → multiple snapshots newest-first', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-hist-3',
+        'hist3@test.com',
+      );
+
+      await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: [sampleCompras[0]] })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: sampleCompras })
+        .expect(200);
+
+      const res = await request(app.getHttpServer())
+        .get('/backup/history')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body).toHaveLength(2);
+      expect(res.body[0].compraCount).toBe(2); // newest first
+      expect(res.body[1].compraCount).toBe(1);
+    });
+  });
+
+  describe('GET /backup/:id', () => {
+    it('S1: existing snapshot → 200 with full data', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-snap-1',
+        'snap1@test.com',
+      );
+
+      const postRes = await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: sampleCompras })
+        .expect(200);
+
+      const snapshotId = postRes.body.id;
+
+      const res = await request(app.getHttpServer())
+        .get(`/backup/${snapshotId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      expect(res.body.compras).toHaveLength(2);
+      expect(res.body.id).toBe(snapshotId);
+    });
+
+    it('S2: non-existent snapshot → 404', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-snap-2',
+        'snap2@test.com',
+      );
+
+      await request(app.getHttpServer())
+        .get('/backup/000000000000000000000000')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(404);
+    });
+  });
+
+  describe('POST /backup/:id/restore', () => {
+    it('R1: full restore → 200 with all compras', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-restore-1',
+        'restore1@test.com',
+      );
+
+      const postRes = await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: sampleCompras })
+        .expect(200);
+
+      const snapshotId = postRes.body.id;
+
+      const res = await request(app.getHttpServer())
+        .post(`/backup/${snapshotId}/restore`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({})
+        .expect(200);
+
+      expect(res.body.compras).toHaveLength(2);
+    });
+
+    it('R2: selective restore → 200 with selected compras', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-restore-2',
+        'restore2@test.com',
+      );
+
+      const postRes = await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: sampleCompras })
+        .expect(200);
+
+      const snapshotId = postRes.body.id;
+
+      const res = await request(app.getHttpServer())
+        .post(`/backup/${snapshotId}/restore`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ comprasUuids: [sampleCompras[0].uuid] })
+        .expect(200);
+
+      // Verify selective restore returns only the requested compra
+      expect(res.body.compras).toHaveLength(1);
+      expect(res.body.compras[0].uuid).toBe(sampleCompras[0].uuid);
+    });
+
+    it('R3: invalid snapshot id → 404', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-restore-3',
+        'restore3@test.com',
+      );
+
+      await request(app.getHttpServer())
+        .post('/backup/000000000000000000000000/restore')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({})
+        .expect(404);
+    });
+
+    it('R4: selective restore with UUID not in snapshot → 400', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-restore-4',
+        'restore4@test.com',
+      );
+
+      const postRes = await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: sampleCompras })
+        .expect(200);
+
+      const snapshotId = postRes.body.id;
+
+      const res = await request(app.getHttpServer())
+        .post(`/backup/${snapshotId}/restore`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ comprasUuids: ['non-existent-uuid'] })
+        .expect(400);
+
+      expect(res.body.message).toContain('UUIDs not found in snapshot');
+    });
+
+    it('R5: selective restore with mixed valid/invalid UUIDs → 400', async () => {
+      const { accessToken } = await loginAndGetTokens(
+        'g-restore-5',
+        'restore5@test.com',
+      );
+
+      const postRes = await request(app.getHttpServer())
+        .post('/backup')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ compras: sampleCompras })
+        .expect(200);
+
+      const snapshotId = postRes.body.id;
+
+      const res = await request(app.getHttpServer())
+        .post(`/backup/${snapshotId}/restore`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({ comprasUuids: [sampleCompras[0].uuid, 'bad-uuid'] })
+        .expect(400);
+
+      expect(res.body.message).toContain('UUIDs not found in snapshot: bad-uuid');
     });
   });
 });

@@ -21,6 +21,15 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+    'uuid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _tituloMeta = const VerificationMeta('titulo');
   @override
   late final GeneratedColumn<String> titulo = GeneratedColumn<String>(
@@ -78,6 +87,7 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    uuid,
     titulo,
     fecha,
     archivado,
@@ -98,6 +108,12 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('uuid')) {
+      context.handle(
+        _uuidMeta,
+        uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
+      );
     }
     if (data.containsKey('titulo')) {
       context.handle(
@@ -149,6 +165,10 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      ),
       titulo: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}titulo'],
@@ -180,6 +200,7 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, Compra> {
 
 class Compra extends DataClass implements Insertable<Compra> {
   final int id;
+  final String? uuid;
   final String titulo;
   final String fecha;
   final bool archivado;
@@ -187,6 +208,7 @@ class Compra extends DataClass implements Insertable<Compra> {
   final int orden;
   const Compra({
     required this.id,
+    this.uuid,
     required this.titulo,
     required this.fecha,
     required this.archivado,
@@ -197,6 +219,9 @@ class Compra extends DataClass implements Insertable<Compra> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || uuid != null) {
+      map['uuid'] = Variable<String>(uuid);
+    }
     map['titulo'] = Variable<String>(titulo);
     map['fecha'] = Variable<String>(fecha);
     map['archivado'] = Variable<bool>(archivado);
@@ -210,6 +235,7 @@ class Compra extends DataClass implements Insertable<Compra> {
   ComprasCompanion toCompanion(bool nullToAbsent) {
     return ComprasCompanion(
       id: Value(id),
+      uuid: uuid == null && nullToAbsent ? const Value.absent() : Value(uuid),
       titulo: Value(titulo),
       fecha: Value(fecha),
       archivado: Value(archivado),
@@ -227,6 +253,7 @@ class Compra extends DataClass implements Insertable<Compra> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Compra(
       id: serializer.fromJson<int>(json['id']),
+      uuid: serializer.fromJson<String?>(json['uuid']),
       titulo: serializer.fromJson<String>(json['titulo']),
       fecha: serializer.fromJson<String>(json['fecha']),
       archivado: serializer.fromJson<bool>(json['archivado']),
@@ -239,6 +266,7 @@ class Compra extends DataClass implements Insertable<Compra> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'uuid': serializer.toJson<String?>(uuid),
       'titulo': serializer.toJson<String>(titulo),
       'fecha': serializer.toJson<String>(fecha),
       'archivado': serializer.toJson<bool>(archivado),
@@ -249,6 +277,7 @@ class Compra extends DataClass implements Insertable<Compra> {
 
   Compra copyWith({
     int? id,
+    Value<String?> uuid = const Value.absent(),
     String? titulo,
     String? fecha,
     bool? archivado,
@@ -256,6 +285,7 @@ class Compra extends DataClass implements Insertable<Compra> {
     int? orden,
   }) => Compra(
     id: id ?? this.id,
+    uuid: uuid.present ? uuid.value : this.uuid,
     titulo: titulo ?? this.titulo,
     fecha: fecha ?? this.fecha,
     archivado: archivado ?? this.archivado,
@@ -265,6 +295,7 @@ class Compra extends DataClass implements Insertable<Compra> {
   Compra copyWithCompanion(ComprasCompanion data) {
     return Compra(
       id: data.id.present ? data.id.value : this.id,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
       titulo: data.titulo.present ? data.titulo.value : this.titulo,
       fecha: data.fecha.present ? data.fecha.value : this.fecha,
       archivado: data.archivado.present ? data.archivado.value : this.archivado,
@@ -279,6 +310,7 @@ class Compra extends DataClass implements Insertable<Compra> {
   String toString() {
     return (StringBuffer('Compra(')
           ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
           ..write('titulo: $titulo, ')
           ..write('fecha: $fecha, ')
           ..write('archivado: $archivado, ')
@@ -290,12 +322,13 @@ class Compra extends DataClass implements Insertable<Compra> {
 
   @override
   int get hashCode =>
-      Object.hash(id, titulo, fecha, archivado, presupuesto, orden);
+      Object.hash(id, uuid, titulo, fecha, archivado, presupuesto, orden);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Compra &&
           other.id == this.id &&
+          other.uuid == this.uuid &&
           other.titulo == this.titulo &&
           other.fecha == this.fecha &&
           other.archivado == this.archivado &&
@@ -305,6 +338,7 @@ class Compra extends DataClass implements Insertable<Compra> {
 
 class ComprasCompanion extends UpdateCompanion<Compra> {
   final Value<int> id;
+  final Value<String?> uuid;
   final Value<String> titulo;
   final Value<String> fecha;
   final Value<bool> archivado;
@@ -312,6 +346,7 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
   final Value<int> orden;
   const ComprasCompanion({
     this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
     this.titulo = const Value.absent(),
     this.fecha = const Value.absent(),
     this.archivado = const Value.absent(),
@@ -320,6 +355,7 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
   });
   ComprasCompanion.insert({
     this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
     required String titulo,
     required String fecha,
     this.archivado = const Value.absent(),
@@ -329,6 +365,7 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
        fecha = Value(fecha);
   static Insertable<Compra> custom({
     Expression<int>? id,
+    Expression<String>? uuid,
     Expression<String>? titulo,
     Expression<String>? fecha,
     Expression<bool>? archivado,
@@ -337,6 +374,7 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (uuid != null) 'uuid': uuid,
       if (titulo != null) 'titulo': titulo,
       if (fecha != null) 'fecha': fecha,
       if (archivado != null) 'archivado': archivado,
@@ -347,6 +385,7 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
 
   ComprasCompanion copyWith({
     Value<int>? id,
+    Value<String?>? uuid,
     Value<String>? titulo,
     Value<String>? fecha,
     Value<bool>? archivado,
@@ -355,6 +394,7 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
   }) {
     return ComprasCompanion(
       id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       titulo: titulo ?? this.titulo,
       fecha: fecha ?? this.fecha,
       archivado: archivado ?? this.archivado,
@@ -368,6 +408,9 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
     }
     if (titulo.present) {
       map['titulo'] = Variable<String>(titulo.value);
@@ -391,6 +434,7 @@ class ComprasCompanion extends UpdateCompanion<Compra> {
   String toString() {
     return (StringBuffer('ComprasCompanion(')
           ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
           ..write('titulo: $titulo, ')
           ..write('fecha: $fecha, ')
           ..write('archivado: $archivado, ')
@@ -419,6 +463,15 @@ class $CompraDetallesTable extends CompraDetalles
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'PRIMARY KEY AUTOINCREMENT',
     ),
+  );
+  static const VerificationMeta _uuidMeta = const VerificationMeta('uuid');
+  @override
+  late final GeneratedColumn<String> uuid = GeneratedColumn<String>(
+    'uuid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _nombreMeta = const VerificationMeta('nombre');
   @override
@@ -460,7 +513,14 @@ class $CompraDetallesTable extends CompraDetalles
     ),
   );
   @override
-  List<GeneratedColumn> get $columns => [id, nombre, precio, fecha, compra];
+  List<GeneratedColumn> get $columns => [
+    id,
+    uuid,
+    nombre,
+    precio,
+    fecha,
+    compra,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -475,6 +535,12 @@ class $CompraDetallesTable extends CompraDetalles
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('uuid')) {
+      context.handle(
+        _uuidMeta,
+        uuid.isAcceptableOrUnknown(data['uuid']!, _uuidMeta),
+      );
     }
     if (data.containsKey('nombre')) {
       context.handle(
@@ -521,6 +587,10 @@ class $CompraDetallesTable extends CompraDetalles
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
+      ),
       nombre: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}nombre'],
@@ -548,12 +618,14 @@ class $CompraDetallesTable extends CompraDetalles
 
 class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
   final int id;
+  final String? uuid;
   final String nombre;
   final double precio;
   final String fecha;
   final int compra;
   const CompraDetalle({
     required this.id,
+    this.uuid,
     required this.nombre,
     required this.precio,
     required this.fecha,
@@ -563,6 +635,9 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || uuid != null) {
+      map['uuid'] = Variable<String>(uuid);
+    }
     map['nombre'] = Variable<String>(nombre);
     map['precio'] = Variable<double>(precio);
     map['fecha'] = Variable<String>(fecha);
@@ -573,6 +648,7 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
   CompraDetallesCompanion toCompanion(bool nullToAbsent) {
     return CompraDetallesCompanion(
       id: Value(id),
+      uuid: uuid == null && nullToAbsent ? const Value.absent() : Value(uuid),
       nombre: Value(nombre),
       precio: Value(precio),
       fecha: Value(fecha),
@@ -587,6 +663,7 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CompraDetalle(
       id: serializer.fromJson<int>(json['id']),
+      uuid: serializer.fromJson<String?>(json['uuid']),
       nombre: serializer.fromJson<String>(json['nombre']),
       precio: serializer.fromJson<double>(json['precio']),
       fecha: serializer.fromJson<String>(json['fecha']),
@@ -598,6 +675,7 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'uuid': serializer.toJson<String?>(uuid),
       'nombre': serializer.toJson<String>(nombre),
       'precio': serializer.toJson<double>(precio),
       'fecha': serializer.toJson<String>(fecha),
@@ -607,12 +685,14 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
 
   CompraDetalle copyWith({
     int? id,
+    Value<String?> uuid = const Value.absent(),
     String? nombre,
     double? precio,
     String? fecha,
     int? compra,
   }) => CompraDetalle(
     id: id ?? this.id,
+    uuid: uuid.present ? uuid.value : this.uuid,
     nombre: nombre ?? this.nombre,
     precio: precio ?? this.precio,
     fecha: fecha ?? this.fecha,
@@ -621,6 +701,7 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
   CompraDetalle copyWithCompanion(CompraDetallesCompanion data) {
     return CompraDetalle(
       id: data.id.present ? data.id.value : this.id,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
       nombre: data.nombre.present ? data.nombre.value : this.nombre,
       precio: data.precio.present ? data.precio.value : this.precio,
       fecha: data.fecha.present ? data.fecha.value : this.fecha,
@@ -632,6 +713,7 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
   String toString() {
     return (StringBuffer('CompraDetalle(')
           ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
           ..write('nombre: $nombre, ')
           ..write('precio: $precio, ')
           ..write('fecha: $fecha, ')
@@ -641,12 +723,13 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
   }
 
   @override
-  int get hashCode => Object.hash(id, nombre, precio, fecha, compra);
+  int get hashCode => Object.hash(id, uuid, nombre, precio, fecha, compra);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CompraDetalle &&
           other.id == this.id &&
+          other.uuid == this.uuid &&
           other.nombre == this.nombre &&
           other.precio == this.precio &&
           other.fecha == this.fecha &&
@@ -655,12 +738,14 @@ class CompraDetalle extends DataClass implements Insertable<CompraDetalle> {
 
 class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
   final Value<int> id;
+  final Value<String?> uuid;
   final Value<String> nombre;
   final Value<double> precio;
   final Value<String> fecha;
   final Value<int> compra;
   const CompraDetallesCompanion({
     this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
     this.nombre = const Value.absent(),
     this.precio = const Value.absent(),
     this.fecha = const Value.absent(),
@@ -668,6 +753,7 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
   });
   CompraDetallesCompanion.insert({
     this.id = const Value.absent(),
+    this.uuid = const Value.absent(),
     required String nombre,
     required double precio,
     required String fecha,
@@ -678,6 +764,7 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
        compra = Value(compra);
   static Insertable<CompraDetalle> custom({
     Expression<int>? id,
+    Expression<String>? uuid,
     Expression<String>? nombre,
     Expression<double>? precio,
     Expression<String>? fecha,
@@ -685,6 +772,7 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (uuid != null) 'uuid': uuid,
       if (nombre != null) 'nombre': nombre,
       if (precio != null) 'precio': precio,
       if (fecha != null) 'fecha': fecha,
@@ -694,6 +782,7 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
 
   CompraDetallesCompanion copyWith({
     Value<int>? id,
+    Value<String?>? uuid,
     Value<String>? nombre,
     Value<double>? precio,
     Value<String>? fecha,
@@ -701,6 +790,7 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
   }) {
     return CompraDetallesCompanion(
       id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       nombre: nombre ?? this.nombre,
       precio: precio ?? this.precio,
       fecha: fecha ?? this.fecha,
@@ -713,6 +803,9 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (uuid.present) {
+      map['uuid'] = Variable<String>(uuid.value);
     }
     if (nombre.present) {
       map['nombre'] = Variable<String>(nombre.value);
@@ -733,6 +826,7 @@ class CompraDetallesCompanion extends UpdateCompanion<CompraDetalle> {
   String toString() {
     return (StringBuffer('CompraDetallesCompanion(')
           ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
           ..write('nombre: $nombre, ')
           ..write('precio: $precio, ')
           ..write('fecha: $fecha, ')
@@ -757,6 +851,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 typedef $$ComprasTableCreateCompanionBuilder =
     ComprasCompanion Function({
       Value<int> id,
+      Value<String?> uuid,
       required String titulo,
       required String fecha,
       Value<bool> archivado,
@@ -766,6 +861,7 @@ typedef $$ComprasTableCreateCompanionBuilder =
 typedef $$ComprasTableUpdateCompanionBuilder =
     ComprasCompanion Function({
       Value<int> id,
+      Value<String?> uuid,
       Value<String> titulo,
       Value<String> fecha,
       Value<bool> archivado,
@@ -807,6 +903,11 @@ class $$ComprasTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+    column: $table.uuid,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -875,6 +976,11 @@ class $$ComprasTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get titulo => $composableBuilder(
     column: $table.titulo,
     builder: (column) => ColumnOrderings(column),
@@ -912,6 +1018,9 @@ class $$ComprasTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
 
   GeneratedColumn<String> get titulo =>
       $composableBuilder(column: $table.titulo, builder: (column) => column);
@@ -985,6 +1094,7 @@ class $$ComprasTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
                 Value<String> titulo = const Value.absent(),
                 Value<String> fecha = const Value.absent(),
                 Value<bool> archivado = const Value.absent(),
@@ -992,6 +1102,7 @@ class $$ComprasTableTableManager
                 Value<int> orden = const Value.absent(),
               }) => ComprasCompanion(
                 id: id,
+                uuid: uuid,
                 titulo: titulo,
                 fecha: fecha,
                 archivado: archivado,
@@ -1001,6 +1112,7 @@ class $$ComprasTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
                 required String titulo,
                 required String fecha,
                 Value<bool> archivado = const Value.absent(),
@@ -1008,6 +1120,7 @@ class $$ComprasTableTableManager
                 Value<int> orden = const Value.absent(),
               }) => ComprasCompanion.insert(
                 id: id,
+                uuid: uuid,
                 titulo: titulo,
                 fecha: fecha,
                 archivado: archivado,
@@ -1070,6 +1183,7 @@ typedef $$ComprasTableProcessedTableManager =
 typedef $$CompraDetallesTableCreateCompanionBuilder =
     CompraDetallesCompanion Function({
       Value<int> id,
+      Value<String?> uuid,
       required String nombre,
       required double precio,
       required String fecha,
@@ -1078,6 +1192,7 @@ typedef $$CompraDetallesTableCreateCompanionBuilder =
 typedef $$CompraDetallesTableUpdateCompanionBuilder =
     CompraDetallesCompanion Function({
       Value<int> id,
+      Value<String?> uuid,
       Value<String> nombre,
       Value<double> precio,
       Value<String> fecha,
@@ -1122,6 +1237,11 @@ class $$CompraDetallesTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get uuid => $composableBuilder(
+    column: $table.uuid,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1178,6 +1298,11 @@ class $$CompraDetallesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get uuid => $composableBuilder(
+    column: $table.uuid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get nombre => $composableBuilder(
     column: $table.nombre,
     builder: (column) => ColumnOrderings(column),
@@ -1228,6 +1353,9 @@ class $$CompraDetallesTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get uuid =>
+      $composableBuilder(column: $table.uuid, builder: (column) => column);
 
   GeneratedColumn<String> get nombre =>
       $composableBuilder(column: $table.nombre, builder: (column) => column);
@@ -1293,12 +1421,14 @@ class $$CompraDetallesTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
                 Value<String> nombre = const Value.absent(),
                 Value<double> precio = const Value.absent(),
                 Value<String> fecha = const Value.absent(),
                 Value<int> compra = const Value.absent(),
               }) => CompraDetallesCompanion(
                 id: id,
+                uuid: uuid,
                 nombre: nombre,
                 precio: precio,
                 fecha: fecha,
@@ -1307,12 +1437,14 @@ class $$CompraDetallesTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> uuid = const Value.absent(),
                 required String nombre,
                 required double precio,
                 required String fecha,
                 required int compra,
               }) => CompraDetallesCompanion.insert(
                 id: id,
+                uuid: uuid,
                 nombre: nombre,
                 precio: precio,
                 fecha: fecha,

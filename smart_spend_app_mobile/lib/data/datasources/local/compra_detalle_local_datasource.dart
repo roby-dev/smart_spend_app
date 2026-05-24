@@ -4,6 +4,7 @@ import 'package:smart_spend_app/config/database/database_helper_drift.dart';
 abstract class CompraDetalleLocalDataSource {
   Future<List<CompraDetalle>> getDetallesByCompraId(int compraId);
   Future<CompraDetalle?> getDetalleById(int id);
+  Future<CompraDetalle?> findDetalleByUuid(String uuid);
   Future<int> insertDetalle(CompraDetallesCompanion detalle);
   Future<bool> updateDetalle(CompraDetallesCompanion detalle);
   Future<bool> deleteDetalle(int id);
@@ -29,6 +30,13 @@ class CompraDetalleLocalDataSourceImpl implements CompraDetalleLocalDataSource {
     return await (_database.select(
       _database.compraDetalles,
     )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  }
+
+  @override
+  Future<CompraDetalle?> findDetalleByUuid(String uuid) async {
+    return await (_database.select(_database.compraDetalles)
+          ..where((tbl) => tbl.uuid.equals(uuid)))
+        .getSingleOrNull();
   }
 
   @override

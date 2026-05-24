@@ -11,11 +11,28 @@ enum CloudBackupStatus { idle, loading, success, error }
 class CloudBackupState {
   final CloudBackupStatus status;
   final String? message;
+  final List<dynamic> history;
+  final Map<String, dynamic>? selectedSnapshot;
 
-  const CloudBackupState({this.status = CloudBackupStatus.idle, this.message});
+  const CloudBackupState({
+    this.status = CloudBackupStatus.idle,
+    this.message,
+    this.history = const [],
+    this.selectedSnapshot,
+  });
 
-  CloudBackupState copyWith({CloudBackupStatus? status, String? message}) =>
-      CloudBackupState(status: status ?? this.status, message: message);
+  CloudBackupState copyWith({
+    CloudBackupStatus? status,
+    String? message,
+    List<dynamic>? history,
+    Map<String, dynamic>? selectedSnapshot,
+  }) =>
+      CloudBackupState(
+        status: status ?? this.status,
+        message: message ?? this.message,
+        history: history ?? this.history,
+        selectedSnapshot: selectedSnapshot ?? this.selectedSnapshot,
+      );
 }
 
 final cloudBackupProvider =
@@ -83,6 +100,102 @@ class CloudBackupNotifier extends Notifier<CloudBackupState> {
         );
         return false;
       }
+
+      final repo = ref.read(compraRepositoryProvider);
+      await repo.importFromJson(jsonEncode(compras));
+      await ref.read(homeProvider.notifier).loadCompras();
+
+      state = state.copyWith(
+        status: CloudBackupStatus.success,
+        message: 'Backup restaurado',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: CloudBackupStatus.error,
+        message: 'No se pudo restaurar: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Loads the backup history for the current user.
+  Future<bool> loadHistory() async {
+    state = state.copyWith(status: CloudBackupStatus.loading, message: null);
+
+    final authed = await ref.read(authProvider.notifier).ensureAuthenticated();
+    if (!authed) {
+      state = state.copyWith(status: CloudBackupStatus.idle, message: null);
+      return false;
+    }
+
+    try {
+      final history =
+          await ref.read(backupRemoteDatasourceProvider).getBackupHistory();
+      state = state.copyWith(
+        status: CloudBackupStatus.success,
+        history: history,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: CloudBackupStatus.error,
+        message: 'No se pudo cargar el historial: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Fetches a specific backup snapshot by id.
+  Future<bool> selectSnapshot(String id) async {
+    state = state.copyWith(status: CloudBackupStatus.loading, message: null);
+
+    final authed = await ref.read(authProvider.notifier).ensureAuthenticated();
+    if (!authed) {
+      state = state.copyWith(status: CloudBackupStatus.idle, message: null);
+      return false;
+    }
+
+    try {
+      final snapshot =
+          await ref.read(backupRemoteDatasourceProvider).getBackupById(id);
+      if (snapshot == null) {
+        state = state.copyWith(
+          status: CloudBackupStatus.error,
+          message: 'Backup no encontrado',
+        );
+        return false;
+      }
+
+      state = state.copyWith(
+        status: CloudBackupStatus.success,
+        selectedSnapshot: snapshot,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: CloudBackupStatus.error,
+        message: 'No se pudo cargar el backup: $e',
+      );
+      return false;
+    }
+  }
+
+  /// Restores selected compras from a snapshot. If [uuids] is null or empty,
+  /// restores all compras from the snapshot.
+  Future<bool> restoreSelected(String id, {List<String>? uuids}) async {
+    state = state.copyWith(status: CloudBackupStatus.loading, message: null);
+
+    final authed = await ref.read(authProvider.notifier).ensureAuthenticated();
+    if (!authed) {
+      state = state.copyWith(status: CloudBackupStatus.idle, message: null);
+      return false;
+    }
+
+    try {
+      final compras = await ref
+          .read(backupRemoteDatasourceProvider)
+          .restoreBackup(id, uuids: uuids);
 
       final repo = ref.read(compraRepositoryProvider);
       await repo.importFromJson(jsonEncode(compras));
