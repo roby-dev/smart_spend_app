@@ -159,7 +159,7 @@ extension DriftExportImport on AppDatabase {
           titulo: Value(compraMap['titulo']),
           fecha: Value(compraMap['fecha']),
           archivado: Value(compraMap['archivado'] ?? false),
-          presupuesto: Value(compraMap['presupuesto']),
+          presupuesto: Value((compraMap['presupuesto'] as num?)?.toDouble()),
           orden: Value(existing.orden),
         ));
 
@@ -177,7 +177,7 @@ extension DriftExportImport on AppDatabase {
           titulo: Value(compraMap['titulo']),
           fecha: Value(compraMap['fecha']),
           archivado: Value(compraMap['archivado'] ?? false),
-          presupuesto: Value(compraMap['presupuesto']),
+          presupuesto: Value((compraMap['presupuesto'] as num?)?.toDouble()),
           orden: Value(nextOrden++),
         ));
       }

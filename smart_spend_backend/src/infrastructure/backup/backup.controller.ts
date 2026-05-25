@@ -124,23 +124,11 @@ export class BackupController {
     @Param('id') id: string,
     @Body() dto: SelectiveRestoreRequestDto,
   ): Promise<BackupSnapshotResponseDto> {
-    // [LOG] Punto 3 — qué recibe el backend
-    console.log('[BACKUP] ═══════════════════════════════════════');
-    console.log(`[BACKUP] 📥 POST /backup/${id}/restore`);
-    console.log(`[BACKUP]    comprasUuids: ${dto.comprasUuids?.length ?? 0} (${JSON.stringify(dto.comprasUuids)})`);
-    console.log('[BACKUP] ═══════════════════════════════════════');
-
     try {
       const compras = await this.restoreBackupSnapshotUseCase.execute(
         id,
         dto.comprasUuids,
       );
-
-      // [LOG] Punto 4 — qué devuelve el use case
-      console.log('[BACKUP] 📤 Restore exitoso — compras devueltas:');
-      console.log('[BACKUP]    cantidad: ' + compras.length);
-      console.log('[BACKUP]    uuids: [' + compras.map(c => c.uuid).join(', ') + ']');
-
       return new BackupSnapshotResponseDto(id, compras, new Date());
     } catch (error) {
       if (error instanceof BackupNotFoundError) {

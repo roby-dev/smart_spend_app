@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/config/network/dio_client.dart';
 
@@ -47,17 +46,11 @@ class BackupRemoteDatasource {
   /// Restores a backup snapshot. Optionally pass a list of compra UUIDs
   /// for selective restore.
   Future<List<dynamic>> restoreBackup(String id, {List<String>? uuids}) async {
-    final body = uuids != null && uuids.isNotEmpty
-        ? {'comprasUuids': uuids}
-        : <String, dynamic>{};
-
-    // [LOG] Punto 2 — qué se envía por HTTP
-    debugPrint('[BACKUP HTTP] 📤 POST /backup/$id/restore');
-    debugPrint('[BACKUP HTTP]    body: $body');
-
     final res = await _dio.post<Map<String, dynamic>>(
       '/backup/$id/restore',
-      data: body,
+      data: uuids != null && uuids.isNotEmpty
+          ? {'comprasUuids': uuids}
+          : <String, dynamic>{},
     );
     return res.data?['compras'] as List<dynamic>? ?? [];
   }

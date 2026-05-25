@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_spend_app/data/repositories/compra_repository_provider.dart';
 import 'package:smart_spend_app/features/auth/providers/auth_provider.dart';
@@ -168,14 +167,6 @@ class CloudBackupNotifier extends Notifier<CloudBackupState> {
         return false;
       }
 
-      // [LOG] Punto 5 — qué recibe el frontend al seleccionar un backup
-      debugPrint('[BACKUP] ═══════════════════════════════════════');
-      debugPrint('[BACKUP] 📥 Snapshot recibido del backend (id: $id)');
-      debugPrint('[BACKUP] Cantidad de compras: ${(snapshot['compras'] as List<dynamic>?)?.length ?? 0}');
-      debugPrint('[BACKUP] Snapshot completo:');
-      debugPrint('[BACKUP] ${const JsonEncoder.withIndent('  ').convert(snapshot)}');
-      debugPrint('[BACKUP] ═══════════════════════════════════════');
-
       state = state.copyWith(
         status: CloudBackupStatus.success,
         selectedSnapshot: snapshot,
@@ -195,23 +186,6 @@ class CloudBackupNotifier extends Notifier<CloudBackupState> {
   Future<bool> restoreSelected(String id, {List<String>? uuids}) async {
     state = state.copyWith(status: CloudBackupStatus.loading, message: null);
 
-    final repo = ref.read(compraRepositoryProvider);
-
-    // [LOG] Punto 1 — compras locales actuales antes de restaurar
-    debugPrint('[BACKUP] ═══════════════════════════════════════');
-    debugPrint('[BACKUP] 📋 Compras locales ANTES de restaurar:');
-    try {
-      final currentJson = await repo.exportToJson();
-      debugPrint('[BACKUP] $currentJson');
-    } catch (_) {
-      debugPrint('[BACKUP] (no se pudo leer repositorio local)');
-    }
-
-    // [LOG] Punto 2 — qué se envía al backend
-    debugPrint('[BACKUP] 📤 Enviando restore — id: $id');
-    debugPrint('[BACKUP]    uuids seleccionados: ${uuids?.length ?? 0} (${uuids?.toString() ?? 'todos'})');
-    debugPrint('[BACKUP] ═══════════════════════════════════════');
-
     final authed = await ref.read(authProvider.notifier).ensureAuthenticated();
     if (!authed) {
       state = state.copyWith(status: CloudBackupStatus.idle, message: null);
@@ -223,6 +197,7 @@ class CloudBackupNotifier extends Notifier<CloudBackupState> {
           .read(backupRemoteDatasourceProvider)
           .restoreBackup(id, uuids: uuids);
 
+      final repo = ref.read(compraRepositoryProvider);
       await repo.importFromJson(jsonEncode(compras));
       await ref.read(homeProvider.notifier).loadCompras();
 

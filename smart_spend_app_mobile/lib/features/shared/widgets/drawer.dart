@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:smart_spend_app/config/router/app_router.dart';
 import 'package:smart_spend_app/constants/app_colors.dart';
 import 'package:smart_spend_app/features/auth/providers/auth_provider.dart';
 import 'package:smart_spend_app/features/cloud_backup/providers/cloud_backup_provider.dart';
@@ -18,8 +19,7 @@ class MyDrawer extends ConsumerWidget {
     final profile = authState.profile;
 
     return Drawer(
-      backgroundColor: AppColors.gray25,
-      surfaceTintColor: AppColors.primary700,
+      backgroundColor: AppColors.gray50,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
@@ -61,7 +61,7 @@ class MyDrawer extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(vertical: 18),
                   child: LinearProgressIndicator(
                     minHeight: 3,
-                    color: AppColors.primary700,
+                    color: AppColors.primary600,
                     backgroundColor: AppColors.gray200,
                   ),
                 ),
@@ -81,7 +81,7 @@ class MyDrawer extends ConsumerWidget {
                   icon: Icons.login_rounded,
                   label: isSigningIn ? 'Iniciando sesion...' : 'Iniciar sesion',
                   enabled: !isSigningIn,
-                  foregroundColor: AppColors.primary700,
+                  foregroundColor: AppColors.primary600,
                   backgroundColor: AppColors.gray100,
                   onTap: () => _signIn(context, ref),
                 ),
@@ -110,27 +110,27 @@ class MyDrawer extends ConsumerWidget {
   }
 
   Future<void> _runBackup(BuildContext context, WidgetRef ref) async {
-    await ref.read(cloudBackupProvider.notifier).backupNow();
-    if (!context.mounted) return;
-    _showResult(context, ref);
-  }
-
-  void _goToBackupHistory(BuildContext context) {
     Navigator.pop(context);
-    context.push('/backup-history');
-  }
+    await ref.read(cloudBackupProvider.notifier).backupNow();
 
-  void _showResult(BuildContext context, WidgetRef ref) {
+    final rootCtx = rootNavigatorKey.currentContext;
+    if (rootCtx == null) return;
+
     final state = ref.read(cloudBackupProvider);
     final message = state.message;
-    if (message == null || !context.mounted) return;
+    if (message == null) return;
     final isError = state.status == CloudBackupStatus.error;
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(rootCtx).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: isError ? AppColors.error500 : AppColors.gray800,
       ),
     );
+  }
+
+  void _goToBackupHistory(BuildContext context) {
+    Navigator.pop(context);
+    context.push('/backup-history');
   }
 }
 
@@ -172,7 +172,7 @@ class _AccountHeader extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.primary700),
+          border: Border.all(color: AppColors.gray200),
           boxShadow: AppColors.shadowSm,
         ),
         child: Row(
@@ -209,7 +209,7 @@ class _AccountHeader extends StatelessWidget {
             if (isSignedIn)
               const Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.primary700,
+                color: AppColors.gray500,
               ),
           ],
         ),
@@ -242,7 +242,7 @@ class _ProfileAvatar extends StatelessWidget {
           : Text(
               initials,
               style: const TextStyle(
-                color: AppColors.primary700,
+                color: AppColors.gray600,
                 fontWeight: FontWeight.w800,
               ),
             ),

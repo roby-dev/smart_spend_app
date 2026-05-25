@@ -53,7 +53,7 @@ class _SelectiveRestoreScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Backup restaurado exitosamente')),
       );
-      context.pop();
+      context.go('/home');
     }
   }
 
