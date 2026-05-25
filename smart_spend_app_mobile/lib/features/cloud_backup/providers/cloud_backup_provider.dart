@@ -46,7 +46,7 @@ class CloudBackupNotifier extends Notifier<CloudBackupState> {
 
   /// Uploads the full local export to the cloud. Triggers Google Sign-In if
   /// there is no active session. Returns true on success.
-  Future<bool> backupNow() async {
+  Future<bool> backupNow({String? name}) async {
     state = state.copyWith(status: CloudBackupStatus.loading, message: null);
 
     final authed = await ref.read(authProvider.notifier).ensureAuthenticated();
@@ -63,7 +63,9 @@ class CloudBackupNotifier extends Notifier<CloudBackupState> {
       final jsonString = await repo.exportToJson();
       final compras = jsonDecode(jsonString) as List<dynamic>;
 
-      await ref.read(backupRemoteDatasourceProvider).saveBackup(compras);
+      await ref
+          .read(backupRemoteDatasourceProvider)
+          .saveBackup(compras, name: name);
 
       state = state.copyWith(
         status: CloudBackupStatus.success,

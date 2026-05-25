@@ -6,7 +6,11 @@ export interface IBackupRepository {
 
   findByUserId(userId: string): Promise<Backup | null>;
 
-  createSnapshot(userId: string, compras: CompraData[]): Promise<BackupSnapshot>;
+  createSnapshot(
+    userId: string,
+    compras: CompraData[],
+    name?: string,
+  ): Promise<BackupSnapshot>;
 
   findSnapshotsByUserId(userId: string): Promise<BackupSnapshot[]>;
 

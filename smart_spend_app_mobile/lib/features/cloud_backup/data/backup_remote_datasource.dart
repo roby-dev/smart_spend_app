@@ -7,10 +7,14 @@ class BackupRemoteDatasource {
 
   final Dio _dio;
 
-  Future<void> saveBackup(List<dynamic> compras) async {
+  Future<void> saveBackup(List<dynamic> compras, {String? name}) async {
+    final data = <String, dynamic>{'compras': compras};
+    if (name != null && name.trim().isNotEmpty) {
+      data['name'] = name.trim();
+    }
     await _dio.post<Map<String, dynamic>>(
       '/backup',
-      data: {'compras': compras},
+      data: data,
     );
   }
 

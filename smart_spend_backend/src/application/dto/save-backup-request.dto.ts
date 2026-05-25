@@ -52,6 +52,10 @@ export class CompraDto {
 }
 
 export class SaveBackupRequestDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CompraDto)

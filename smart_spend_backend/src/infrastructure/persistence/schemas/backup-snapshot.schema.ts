@@ -9,6 +9,9 @@ export class BackupSnapshotSchema {
   @Prop({ required: true, index: true })
   userId: string;
 
+  @Prop({ type: String })
+  name?: string;
+
   @Prop({ type: [MongooseSchema.Types.Mixed], default: [] })
   compras: CompraData[];
 

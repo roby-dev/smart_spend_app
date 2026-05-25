@@ -95,7 +95,7 @@ class _BackupHistoryScreenState extends ConsumerState<BackupHistoryScreen> {
                   color: AppColors.primary600, size: 21),
             ),
             title: Text(
-              'Backup ${index + 1}',
+              snapshot['name'] as String? ?? 'Backup ${index + 1}',
               style: const TextStyle(
                 color: AppColors.gray900,
                 fontWeight: FontWeight.w600,

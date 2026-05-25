@@ -111,7 +111,15 @@ class MyDrawer extends ConsumerWidget {
 
   Future<void> _runBackup(BuildContext context, WidgetRef ref) async {
     Navigator.pop(context);
-    await ref.read(cloudBackupProvider.notifier).backupNow();
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => const _BackupNameDialog(),
+    );
+    // User cancelled the dialog
+    if (name == null) return;
+
+    await ref.read(cloudBackupProvider.notifier).backupNow(name: name);
 
     final rootCtx = rootNavigatorKey.currentContext;
     if (rootCtx == null) return;
@@ -156,13 +164,13 @@ class _AccountHeader extends StatelessWidget {
     final title = (name?.trim().isNotEmpty ?? false)
         ? name!.trim()
         : isSignedIn
-        ? 'Cuenta conectada'
-        : 'Smart Spend';
+            ? 'Cuenta conectada'
+            : 'Smart Spend';
     final subtitle = (email?.trim().isNotEmpty ?? false)
         ? email!.trim()
         : isSignedIn
-        ? 'Sesion activa'
-        : 'Inicia sesion para guardar tu backup';
+            ? 'Sesion activa'
+            : 'Inicia sesion para guardar tu backup';
 
     return InkWell(
       borderRadius: BorderRadius.circular(20),
@@ -332,6 +340,64 @@ class _DrawerAction extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BackupNameDialog extends StatefulWidget {
+  const _BackupNameDialog();
+
+  @override
+  State<_BackupNameDialog> createState() => _BackupNameDialogState();
+}
+
+class _BackupNameDialogState extends State<_BackupNameDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text(
+        'Nombre del backup',
+        style: TextStyle(
+          color: AppColors.gray900,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(
+          hintText: 'Ej: Antes del viaje',
+          hintStyle: const TextStyle(color: AppColors.gray500),
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Cancelar',
+            style: TextStyle(color: AppColors.gray500),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: const Text(
+            'Guardar',
+            style: TextStyle(color: AppColors.primary600),
+          ),
+        ),
+      ],
     );
   }
 }

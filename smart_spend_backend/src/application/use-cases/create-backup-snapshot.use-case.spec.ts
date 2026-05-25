@@ -47,7 +47,11 @@ describe('CreateBackupSnapshotUseCase', () => {
 
     const result = await useCase.execute('user-1', sampleCompras);
 
-    expect(repo.createSnapshot).toHaveBeenCalledWith('user-1', sampleCompras);
+    expect(repo.createSnapshot).toHaveBeenCalledWith(
+      'user-1',
+      sampleCompras,
+      undefined,
+    );
     expect(result).toBe(stored);
   });
 
@@ -57,7 +61,7 @@ describe('CreateBackupSnapshotUseCase', () => {
 
     const result = await useCase.execute('user-1', []);
 
-    expect(repo.createSnapshot).toHaveBeenCalledWith('user-1', []);
+    expect(repo.createSnapshot).toHaveBeenCalledWith('user-1', [], undefined);
     expect(result.compras).toEqual([]);
   });
 

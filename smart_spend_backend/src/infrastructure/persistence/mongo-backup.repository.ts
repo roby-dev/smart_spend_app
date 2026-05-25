@@ -40,8 +40,9 @@ export class MongoBackupRepository implements IBackupRepository {
   async createSnapshot(
     userId: string,
     compras: CompraData[],
+    name?: string,
   ): Promise<BackupSnapshot> {
-    const doc = await this.snapshotModel.create({ userId, compras });
+    const doc = await this.snapshotModel.create({ userId, compras, name });
     return this.toSnapshotDomain(doc);
   }
 
@@ -73,6 +74,7 @@ export class MongoBackupRepository implements IBackupRepository {
       id: doc._id.toString(),
       userId: doc.userId,
       compras: doc.compras,
+      name: doc.name,
       createdAt: doc.createdAt,
     });
   }

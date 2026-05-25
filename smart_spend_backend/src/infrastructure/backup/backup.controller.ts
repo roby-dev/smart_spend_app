@@ -58,11 +58,20 @@ export class BackupController {
   ): Promise<BackupResponseDto> {
     // Dual-write: create snapshot + compat upsert to old collection
     const [snapshot] = await Promise.all([
-      this.createBackupSnapshotUseCase.execute(req.user.userId, dto.compras),
+      this.createBackupSnapshotUseCase.execute(
+        req.user.userId,
+        dto.compras,
+        dto.name,
+      ),
       this.saveBackupUseCase.execute(req.user.userId, dto.compras),
     ]);
 
-    return new BackupResponseDto(snapshot.compras, snapshot.createdAt, snapshot.id);
+    return new BackupResponseDto(
+      snapshot.compras,
+      snapshot.createdAt,
+      snapshot.id,
+      snapshot.name,
+    );
   }
 
   @Get()
@@ -76,6 +85,8 @@ export class BackupController {
         return new BackupResponseDto(
           snapshots[0].compras,
           snapshots[0].createdAt,
+          undefined,
+          snapshots[0].name,
         );
       }
     } catch {
@@ -94,7 +105,13 @@ export class BackupController {
       req.user.userId,
     );
     return snapshots.map(
-      (s) => new BackupHistoryResponseDto(s.id!, s.createdAt, s.compras.length),
+      (s) =>
+        new BackupHistoryResponseDto(
+          s.id!,
+          s.createdAt,
+          s.compras.length,
+          s.name,
+        ),
     );
   }
 
@@ -109,6 +126,7 @@ export class BackupController {
         snapshot.id!,
         snapshot.compras,
         snapshot.createdAt,
+        snapshot.name,
       );
     } catch (error) {
       if (error instanceof BackupNotFoundError) {
