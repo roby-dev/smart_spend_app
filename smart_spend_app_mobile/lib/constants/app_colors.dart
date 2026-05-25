@@ -15,23 +15,23 @@ class AppColors {
 
   static const Color border1 = Color(0xFFD9D9D9);
 
-  // ── Primary · Lavanda #DA91F1 ──────────────────────────────────
-  // brand:      #DA91F1  (primary300)
-  // action:     #B052D6  (primary600) — botones, activos
-  // accent:     #A23DCD  (primary700) — bordes, énfasis
+  // ── Primary · Lavanda #E9ABFF ──────────────────────────────────
+  // brand:      #E9ABFF  (primary300)
+  // action:     #C854F2  (primary600) — botones, activos
+  // accent:     #B737E6  (primary700) — bordes, énfasis
   // ─────────────────────────────────────────────────────────────────
 
-  static const Color primary25 = Color(0xFFFDF9FF);
-  static const Color primary50 = Color(0xFFF9F0FE);
-  static const Color primary100 = Color(0xFFF2E0FC);
-  static const Color primary200 = Color(0xFFE7C7FA);
-  static const Color primary300 = Color(0xFFDA91F1); // brand
-  static const Color primary400 = Color(0xFFCC7CE8);
-  static const Color primary500 = Color(0xFFBE67DF);
-  static const Color primary600 = Color(0xFFB052D6); // action
-  static const Color primary700 = Color(0xFFA23DCD); // accent
-  static const Color primary800 = Color(0xFF9428C4);
-  static const Color primary900 = Color(0xFF8613BB);
+  static const Color primary25 = Color(0xFFFAF9FA);
+  static const Color primary50 = Color(0xFFF6F1F8);
+  static const Color primary100 = Color(0xFFF1E3F6);
+  static const Color primary200 = Color(0xFFEDCCF9);
+  static const Color primary300 = Color(0xFFE9ABFF); // brand
+  static const Color primary400 = Color(0xFFE18EFF);
+  static const Color primary500 = Color(0xFFD674FA);
+  static const Color primary600 = Color(0xFFC854F2); // action
+  static const Color primary700 = Color(0xFFB737E6); // accent
+  static const Color primary800 = Color(0xFFA421D3);
+  static const Color primary900 = Color(0xFF8620AB);
 
   // ─────────────────────────────────────────────────────────────────
 

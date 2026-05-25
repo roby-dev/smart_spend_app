@@ -16,9 +16,7 @@ void main() async {
 
   runApp(
     ProviderScope(
-      overrides: [
-        databaseProvider.overrideWithValue(appDatabase),
-      ],
+      overrides: [databaseProvider.overrideWithValue(appDatabase)],
       child: const MainApp(),
     ),
   );
