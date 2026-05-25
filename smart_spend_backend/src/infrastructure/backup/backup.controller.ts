@@ -27,6 +27,7 @@ import {
 } from '../../application';
 import { BackupNotFoundError } from '../../domain/exceptions/backup.exceptions';
 import { JwtAccessGuard } from '../auth/jwt-access.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 interface RequestWithUser extends Request {
   user: {
@@ -38,6 +39,7 @@ interface RequestWithUser extends Request {
 
 @Controller('backup')
 @UseGuards(JwtAccessGuard)
+@ApiBearerAuth()
 export class BackupController {
   constructor(
     private readonly saveBackupUseCase: SaveBackupUseCase,

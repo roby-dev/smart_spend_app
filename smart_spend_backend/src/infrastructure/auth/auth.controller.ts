@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { LoginRequestDto } from '../../application/dto/login-request.dto';
 import { RefreshRequestDto } from '../../application/dto/refresh-request.dto';
@@ -43,6 +44,7 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   async refresh(
     @Req() req: RequestWithUser,
     @Body() dto: RefreshRequestDto,
@@ -54,6 +56,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   async logout(
     @Req() req: RequestWithUser,
     @Body() dto: RefreshRequestDto,
