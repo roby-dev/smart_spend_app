@@ -11,7 +11,13 @@ export class RestoreBackupSnapshotUseCase {
       throw new BackupNotFoundError('Backup snapshot not found');
     }
 
+    // [LOG] Punto 4 — datos del snapshot en el backend
+    console.log('[BACKUP USE-CASE] 📦 Snapshot encontrado — id: ' + id);
+    console.log('[BACKUP USE-CASE]    compras en snapshot: ' + snapshot.compras.length);
+    console.log('[BACKUP USE-CASE]    uuids: [' + snapshot.compras.map(c => c.uuid).join(', ') + ']');
+
     if (!comprasUuids || comprasUuids.length === 0) {
+      console.log('[BACKUP USE-CASE]    → devolviendo TODAS las compras');
       return snapshot.compras;
     }
 
@@ -30,6 +36,8 @@ export class RestoreBackupSnapshotUseCase {
       );
     }
 
-    return comprasUuids.map((uuid) => compraMap.get(uuid)!);
+    const result = comprasUuids.map((uuid) => compraMap.get(uuid)!);
+    console.log('[BACKUP USE-CASE]    → devolviendo ' + result.length + ' compras filtradas');
+    return result;
   }
 }

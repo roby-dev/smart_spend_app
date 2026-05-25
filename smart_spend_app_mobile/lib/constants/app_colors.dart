@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  //static const Color gray50 = Color(0xFFF5F5F5);
+  // Grays
   static const Color gray100 = Color(0xFFF6F7F9);
   static const Color gray900 = Color(0xFF0E0E0F);
   static const Color gray500 = Color(0xFFB0B0B1);
@@ -15,14 +15,25 @@ class AppColors {
 
   static const Color border1 = Color(0xFFD9D9D9);
 
-  static const Color primary700 = Color(0xFFDA91F1);
-  static const Color primary100 = Color(0xFFFDF3F2);
-  static const Color primary400 = Color(0xFFF39B99);
-  static const Color primary600 = Color(0xFFE73833);
-  static const Color primary200 = Color(0xFFFCE6E5);
-  static const Color primary50 = Color(0xFFFFF7F6);
-  static const Color primary500 = Color(0xFFED6A66);
-  static const Color primary25 = Color(0xFFFFFBFB);
+  // ── Primary · Lavanda #DA91F1 ──────────────────────────────────
+  // brand:      #DA91F1  (primary300)
+  // action:     #B052D6  (primary600) — botones, activos
+  // accent:     #A23DCD  (primary700) — bordes, énfasis
+  // ─────────────────────────────────────────────────────────────────
+
+  static const Color primary25 = Color(0xFFFDF9FF);
+  static const Color primary50 = Color(0xFFF9F0FE);
+  static const Color primary100 = Color(0xFFF2E0FC);
+  static const Color primary200 = Color(0xFFE7C7FA);
+  static const Color primary300 = Color(0xFFDA91F1); // brand
+  static const Color primary400 = Color(0xFFCC7CE8);
+  static const Color primary500 = Color(0xFFBE67DF);
+  static const Color primary600 = Color(0xFFB052D6); // action
+  static const Color primary700 = Color(0xFFA23DCD); // accent
+  static const Color primary800 = Color(0xFF9428C4);
+  static const Color primary900 = Color(0xFF8613BB);
+
+  // ─────────────────────────────────────────────────────────────────
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);

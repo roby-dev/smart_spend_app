@@ -52,7 +52,7 @@ class MyDrawer extends ConsumerWidget {
                     icon: Icons.cloud_download_outlined,
                     label: 'Restaurar desde la nube',
                     enabled: !isBusy,
-                    onTap: () => _runRestore(context, ref),
+                    onTap: () => _goToBackupHistory(context),
                   ),
                 ],
               ),
@@ -115,10 +115,9 @@ class MyDrawer extends ConsumerWidget {
     _showResult(context, ref);
   }
 
-  Future<void> _runRestore(BuildContext context, WidgetRef ref) async {
-    await ref.read(cloudBackupProvider.notifier).restoreNow();
-    if (!context.mounted) return;
-    _showResult(context, ref);
+  void _goToBackupHistory(BuildContext context) {
+    Navigator.pop(context);
+    context.push('/backup-history');
   }
 
   void _showResult(BuildContext context, WidgetRef ref) {
