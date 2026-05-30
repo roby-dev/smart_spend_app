@@ -17,8 +17,8 @@ class AppColors {
 
   // ── Primary · Lavanda #E9ABFF ──────────────────────────────────
   // brand:      #E9ABFF  (primary300)
-  // action:     #C854F2  (primary600) — botones, activos
-  // accent:     #B737E6  (primary700) — bordes, énfasis
+  // action:     #9B51E0  (primary600) — botones, activos
+  // accent:     #7E3FB8  (primary700) — bordes, énfasis
   // ─────────────────────────────────────────────────────────────────
 
   static const Color primary25 = Color(0xFFFAF9FA);
@@ -28,8 +28,8 @@ class AppColors {
   static const Color primary300 = Color(0xFFE9ABFF); // brand
   static const Color primary400 = Color(0xFFE18EFF);
   static const Color primary500 = Color(0xFFD674FA);
-  static const Color primary600 = Color(0xFFC854F2); // action
-  static const Color primary700 = Color(0xFFB737E6); // accent
+  static const Color primary600 = Color(0xFF9B51E0); // action
+  static const Color primary700 = Color(0xFF7E3FB8); // accent
   static const Color primary800 = Color(0xFFA421D3);
   static const Color primary900 = Color(0xFF8620AB);
 
