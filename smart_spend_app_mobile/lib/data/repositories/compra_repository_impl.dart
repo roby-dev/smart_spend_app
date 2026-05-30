@@ -4,6 +4,7 @@ import 'package:smart_spend_app/data/datasources/local/compra_local_datasource.d
 import 'package:smart_spend_app/data/datasources/local/compra_detalle_local_datasource.dart';
 import 'package:smart_spend_app/domain/models/compra_model.dart';
 import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/domain/models/import_result.dart';
 import 'package:smart_spend_app/domain/repositories/compra_repository.dart';
 import 'package:uuid/uuid.dart';
 
@@ -234,12 +235,18 @@ class CompraRepositoryImpl implements CompraRepository {
   }
 
   @override
-  Future<bool> importFromJson(String jsonString) async {
+  Future<ImportResult> importFromJson(String jsonString) async {
     try {
-      await _database.importFromJson(jsonString);
-      return true;
+      return await _database.importFromJson(jsonString);
     } catch (e) {
-      return false;
+      // Catastrophic failure (e.g. the file is not valid JSON): the import
+      // never started, so report it as a single failure instead of throwing.
+      return ImportResult(
+        imported: 0,
+        failures: [
+          ImportFailure(titulo: '(archivo)', reason: 'no se pudo leer: $e'),
+        ],
+      );
     }
   }
 }

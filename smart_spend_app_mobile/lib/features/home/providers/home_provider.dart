@@ -327,11 +327,15 @@ class HomeNotifier extends Notifier<HomeState> {
           String jsonString = await File(filePath).readAsString();
 
           // Importar los datos usando Drift
-          await _db.importFromJson(jsonString);
+          final result = await _db.importFromJson(jsonString);
 
           if (context.mounted) {
+            final message = result.hasFailures
+                ? 'Importadas ${result.imported}. No se pudieron importar: '
+                    '${result.failedTitulos.join(', ')}'
+                : 'Datos importados exitosamente';
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Datos importados exitosamente')),
+              SnackBar(content: Text(message)),
             );
           }
 

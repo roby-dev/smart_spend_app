@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
+import 'package:smart_spend_app/domain/models/import_result.dart';
 
 part 'database_helper_drift.g.dart';
 
@@ -35,6 +36,11 @@ class CompraDetalles extends Table {
 @DriftDatabase(tables: [Compras, CompraDetalles])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+
+  /// Test-only constructor. Lets unit tests inject an in-memory
+  /// [QueryExecutor] (e.g. `NativeDatabase.memory()`) instead of the
+  /// file-backed connection. Not used by the running app.
+  AppDatabase.forTesting(super.executor);
 
   @override
   int get schemaVersion => 2;
@@ -119,11 +125,15 @@ extension DriftExportImport on AppDatabase {
     return jsonEncode(exportData);
   }
 
-  Future<void> importFromJson(String jsonString) async {
+  Future<ImportResult> importFromJson(String jsonString) async {
     final List<dynamic> decoded = jsonDecode(jsonString);
 
-    decoded.sort((a, b) =>
-        (a['fecha'] as String).compareTo(b['fecha'] as String));
+    // Null-safe sort: a record missing `fecha` must not abort the whole batch.
+    decoded.sort((a, b) {
+      final fa = (a['fecha'] as String?) ?? '';
+      final fb = (b['fecha'] as String?) ?? '';
+      return fa.compareTo(fb);
+    });
 
     // Build map of existing compras by UUID for dedup
     final existingCompras = await select(compras).get();
@@ -141,61 +151,120 @@ extension DriftExportImport on AppDatabase {
         .getSingleOrNull();
     var nextOrden = (currentMax ?? -1) + 1;
 
+    var imported = 0;
+    final failures = <ImportFailure>[];
+
     for (int i = 0; i < decoded.length; i++) {
-      final compraMap = decoded[i];
+      final compraMap = decoded[i] as Map<String, dynamic>;
+      final titulo = (compraMap['titulo'] as String?)?.trim();
+      final displayTitulo =
+          (titulo == null || titulo.isEmpty) ? '(sin nombre)' : titulo;
+
       final incomingUuid = compraMap['uuid'] as String?;
-
-      int compraId;
-      if (incomingUuid != null &&
+      final isUpdate = incomingUuid != null &&
           incomingUuid.isNotEmpty &&
-          compraByUuid.containsKey(incomingUuid)) {
-        // Update existing compra by UUID (last-write-wins)
-        final existing = compraByUuid[incomingUuid]!;
-        compraId = existing.id;
+          compraByUuid.containsKey(incomingUuid);
+      final ordenForInsert = nextOrden;
 
-        await update(compras).replace(ComprasCompanion(
-          id: Value(compraId),
-          uuid: Value(incomingUuid),
-          titulo: Value(compraMap['titulo']),
-          fecha: Value(compraMap['fecha']),
-          archivado: Value(compraMap['archivado'] ?? false),
-          presupuesto: Value((compraMap['presupuesto'] as num?)?.toDouble()),
-          orden: Value(existing.orden),
-        ));
+      try {
+        // Each compra imports in its own transaction: a malformed record is
+        // rolled back cleanly and skipped, never leaving a half-imported row.
+        await transaction(() async {
+          _validateCompraMap(compraMap);
 
-        // Delete old detalles and re-insert
-        await (delete(compraDetalles)
-              ..where((tbl) => tbl.compra.equals(compraId)))
-            .go();
-      } else {
-        // Insert new compra — generate UUIDv7 if absent
-        final newUuid = (incomingUuid != null && incomingUuid.isNotEmpty)
-            ? incomingUuid
-            : const Uuid().v7();
-        compraId = await into(compras).insert(ComprasCompanion(
-          uuid: Value(newUuid),
-          titulo: Value(compraMap['titulo']),
-          fecha: Value(compraMap['fecha']),
-          archivado: Value(compraMap['archivado'] ?? false),
-          presupuesto: Value((compraMap['presupuesto'] as num?)?.toDouble()),
-          orden: Value(nextOrden++),
-        ));
-      }
+          int compraId;
+          if (isUpdate) {
+            // Update existing compra by UUID (last-write-wins)
+            final existing = compraByUuid[incomingUuid]!;
+            compraId = existing.id;
 
-      final detalles = compraMap['detalles'] as List<dynamic>;
-      for (var detalleMap in detalles) {
-        final detalleUuid = detalleMap['uuid'] as String?;
-        final newDetalleUuid = (detalleUuid != null && detalleUuid.isNotEmpty)
-            ? detalleUuid
-            : const Uuid().v7();
-        await into(compraDetalles).insert(CompraDetallesCompanion(
-          uuid: Value(newDetalleUuid),
-          nombre: Value(detalleMap['nombre']),
-          precio: Value((detalleMap['precio'] as num).toDouble()),
-          compra: Value(compraId),
-          fecha: Value(detalleMap['fecha']),
-        ));
+            await update(compras).replace(ComprasCompanion(
+              id: Value(compraId),
+              uuid: Value(incomingUuid),
+              titulo: Value(compraMap['titulo']),
+              fecha: Value(compraMap['fecha']),
+              archivado: Value(compraMap['archivado'] ?? false),
+              presupuesto:
+                  Value((compraMap['presupuesto'] as num?)?.toDouble()),
+              orden: Value(existing.orden),
+            ));
+
+            // Delete old detalles and re-insert
+            await (delete(compraDetalles)
+                  ..where((tbl) => tbl.compra.equals(compraId)))
+                .go();
+          } else {
+            // Insert new compra — generate UUIDv7 if absent
+            final newUuid = (incomingUuid != null && incomingUuid.isNotEmpty)
+                ? incomingUuid
+                : const Uuid().v7();
+            compraId = await into(compras).insert(ComprasCompanion(
+              uuid: Value(newUuid),
+              titulo: Value(compraMap['titulo']),
+              fecha: Value(compraMap['fecha']),
+              archivado: Value(compraMap['archivado'] ?? false),
+              presupuesto:
+                  Value((compraMap['presupuesto'] as num?)?.toDouble()),
+              orden: Value(ordenForInsert),
+            ));
+          }
+
+          final detalles = (compraMap['detalles'] as List<dynamic>?) ?? const [];
+          for (var detalleMap in detalles) {
+            final detalle = detalleMap as Map<String, dynamic>;
+            _validateDetalleMap(detalle);
+            final detalleUuid = detalle['uuid'] as String?;
+            final newDetalleUuid =
+                (detalleUuid != null && detalleUuid.isNotEmpty)
+                    ? detalleUuid
+                    : const Uuid().v7();
+            await into(compraDetalles).insert(CompraDetallesCompanion(
+              uuid: Value(newDetalleUuid),
+              nombre: Value(detalle['nombre']),
+              precio: Value((detalle['precio'] as num).toDouble()),
+              compra: Value(compraId),
+              fecha: Value(detalle['fecha']),
+            ));
+          }
+        });
+
+        // Only advance the orden counter when we actually inserted a new row.
+        if (!isUpdate) nextOrden++;
+        imported++;
+      } catch (e) {
+        failures.add(ImportFailure(titulo: displayTitulo, reason: _reasonFor(e)));
       }
     }
+
+    return ImportResult(imported: imported, failures: failures);
+  }
+
+  void _validateCompraMap(Map<String, dynamic> compraMap) {
+    if (compraMap['fecha'] is! String ||
+        (compraMap['fecha'] as String).isEmpty) {
+      throw const FormatException('la compra no tiene fecha');
+    }
+    // `titulo` must exist and be text, but an empty string is allowed:
+    // the column is non-null and '' is valid (if odd) backup data.
+    if (compraMap['titulo'] is! String) {
+      throw const FormatException('la compra no tiene nombre');
+    }
+  }
+
+  void _validateDetalleMap(Map<String, dynamic> detalle) {
+    if (detalle['fecha'] is! String || (detalle['fecha'] as String).isEmpty) {
+      throw const FormatException('un ítem no tiene fecha');
+    }
+    if (detalle['nombre'] is! String) {
+      throw const FormatException('un ítem no tiene nombre');
+    }
+    if (detalle['precio'] is! num) {
+      throw const FormatException('un ítem no tiene precio válido');
+    }
+  }
+
+  String _reasonFor(Object error) {
+    if (error is FormatException) return error.message;
+    return error.toString();
   }
 }

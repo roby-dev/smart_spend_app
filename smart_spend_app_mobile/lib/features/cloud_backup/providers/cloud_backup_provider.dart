@@ -104,12 +104,15 @@ class CloudBackupNotifier extends Notifier<CloudBackupState> {
       }
 
       final repo = ref.read(compraRepositoryProvider);
-      await repo.importFromJson(jsonEncode(compras));
+      final result = await repo.importFromJson(jsonEncode(compras));
       await ref.read(homeProvider.notifier).loadCompras();
 
       state = state.copyWith(
         status: CloudBackupStatus.success,
-        message: 'Backup restaurado',
+        message: result.hasFailures
+            ? 'Backup restaurado. No se pudieron importar: '
+                '${result.failedTitulos.join(', ')}'
+            : 'Backup restaurado',
       );
       return true;
     } catch (e) {
@@ -200,12 +203,15 @@ class CloudBackupNotifier extends Notifier<CloudBackupState> {
           .restoreBackup(id, uuids: uuids);
 
       final repo = ref.read(compraRepositoryProvider);
-      await repo.importFromJson(jsonEncode(compras));
+      final result = await repo.importFromJson(jsonEncode(compras));
       await ref.read(homeProvider.notifier).loadCompras();
 
       state = state.copyWith(
         status: CloudBackupStatus.success,
-        message: 'Backup restaurado',
+        message: result.hasFailures
+            ? 'Backup restaurado. No se pudieron importar: '
+                '${result.failedTitulos.join(', ')}'
+            : 'Backup restaurado',
       );
       return true;
     } catch (e) {

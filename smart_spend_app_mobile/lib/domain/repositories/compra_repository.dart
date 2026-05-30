@@ -1,5 +1,6 @@
 import 'package:smart_spend_app/domain/models/compra_model.dart';
 import 'package:smart_spend_app/domain/models/compra_detalle_model.dart';
+import 'package:smart_spend_app/domain/models/import_result.dart';
 
 abstract class CompraRepository {
   // Operaciones de Compra
@@ -32,5 +33,5 @@ abstract class CompraRepository {
 
   // Operaciones de Exportación/Importación
   Future<String> exportToJson();
-  Future<bool> importFromJson(String jsonString);
+  Future<ImportResult> importFromJson(String jsonString);
 }
