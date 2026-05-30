@@ -16,23 +16,24 @@ class SelectiveRestoreScreen extends ConsumerStatefulWidget {
 
 class _SelectiveRestoreScreenState
     extends ConsumerState<SelectiveRestoreScreen> {
-  final Set<String> _selectedUuids = {};
-  bool _selectAll = false;
+  // Selection is tracked by row index, not by uuid: legacy backups may have
+  // compras without a uuid, and those rows must still be selectable.
+  final Set<int> _selectedIndices = {};
 
   List<dynamic> get _compras =>
       (widget.snapshot['compras'] as List<dynamic>?) ?? [];
 
+  bool get _allSelected =>
+      _compras.isNotEmpty && _selectedIndices.length == _compras.length;
+
   void _toggleSelectAll() {
     setState(() {
-      _selectAll = !_selectAll;
-      if (_selectAll) {
-        _selectedUuids.addAll(
-          _compras
-              .where((c) => c['uuid'] != null)
-              .map((c) => c['uuid'] as String),
-        );
+      if (_allSelected) {
+        _selectedIndices.clear();
       } else {
-        _selectedUuids.clear();
+        _selectedIndices
+          ..clear()
+          ..addAll(List.generate(_compras.length, (i) => i));
       }
     });
   }
@@ -41,13 +42,33 @@ class _SelectiveRestoreScreenState
     final id = widget.snapshot['id'] as String?;
     if (id == null) return;
 
-    final uuids = _selectedUuids.toList();
-    final notifier = ref.read(cloudBackupProvider.notifier);
+    // No selection or everything selected → restore the whole snapshot.
+    // Passing null also works for legacy backups whose compras lack uuids.
+    final bool restoreAll = _selectedIndices.isEmpty || _allSelected;
 
-    final success = await notifier.restoreSelected(
-      id,
-      uuids: uuids.isNotEmpty ? uuids : null,
-    );
+    List<String>? uuids;
+    if (!restoreAll) {
+      final selected = _selectedIndices.map((i) => _compras[i]).toList();
+      final missingUuid = selected.any((c) => c['uuid'] == null);
+      if (missingUuid) {
+        // Selective restore is matched by uuid server-side, so a partial
+        // selection on an older backup can't be targeted. Be explicit instead
+        // of silently restoring the wrong set.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Este backup es antiguo y no permite selección parcial. '
+              'Usá "Seleccionar todo" para restaurarlo completo.',
+            ),
+          ),
+        );
+        return;
+      }
+      uuids = selected.map((c) => c['uuid'] as String).toList();
+    }
+
+    final notifier = ref.read(cloudBackupProvider.notifier);
+    final success = await notifier.restoreSelected(id, uuids: uuids);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +101,7 @@ class _SelectiveRestoreScreenState
               TextButton(
                 onPressed: _toggleSelectAll,
                 child: Text(
-                  _selectAll ? 'Desmarcar todo' : 'Seleccionar todo',
+                  _allSelected ? 'Desmarcar todo' : 'Seleccionar todo',
                   style: const TextStyle(color: AppColors.primary600),
                 ),
               ),
@@ -117,9 +138,9 @@ class _SelectiveRestoreScreenState
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Text(
-                _selectedUuids.isEmpty
+                _selectedIndices.isEmpty
                     ? 'Restaurar todo'
-                    : 'Restaurar ${_selectedUuids.length} seleccionadas',
+                    : 'Restaurar ${_selectedIndices.length} seleccionadas',
               ),
             ),
           ),
@@ -142,7 +163,6 @@ class _SelectiveRestoreScreenState
       itemCount: _compras.length,
       itemBuilder: (context, index) {
         final compra = _compras[index] as Map<String, dynamic>;
-        final uuid = compra['uuid'] as String?;
         final titulo = compra['titulo'] as String? ?? 'Sin título';
         final detallesCount =
             (compra['detalles'] as List<dynamic>?)?.length ?? 0;
@@ -155,20 +175,16 @@ class _SelectiveRestoreScreenState
             border: Border.all(color: AppColors.gray200),
           ),
           child: CheckboxListTile(
-            value: uuid != null && _selectedUuids.contains(uuid),
-            onChanged: uuid != null
-                ? (selected) {
-                    setState(() {
-                      if (selected == true) {
-                        _selectedUuids.add(uuid);
-                      } else {
-                        _selectedUuids.remove(uuid);
-                      }
-                      _selectAll =
-                          _selectedUuids.length == _compras.length;
-                    });
-                  }
-                : null,
+            value: _selectedIndices.contains(index),
+            onChanged: (selected) {
+              setState(() {
+                if (selected == true) {
+                  _selectedIndices.add(index);
+                } else {
+                  _selectedIndices.remove(index);
+                }
+              });
+            },
             activeColor: AppColors.primary600,
             title: Text(
               titulo,
